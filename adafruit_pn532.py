@@ -143,8 +143,8 @@ PN532_GPIO_P33                      = 3
 PN532_GPIO_P34                      = 4
 PN532_GPIO_P35                      = 5
 
-PN532_ACK                           = bytearray([0x01, 0x00, 0x00, 0xFF, 0x00, 0xFF, 0x00])
-PN532_FRAME_START                   = bytearray([0x01, 0x00, 0x00, 0xFF])
+PN532_ACK                           = b'\x01\x00\x00\xFF\x00\xFF\x00'
+PN532_FRAME_START                   = b'\x01\x00\x00\xFF'
 
 
 class PN532_I2C(object):
@@ -154,28 +154,22 @@ class PN532_I2C(object):
     PN532 (see: http://www.raspberrypi.org/forums/viewtopic.php?f=32&t=98070&p=720659#p720659)
     """
 
-    def __init__(self, i2c):
+    def __init__(self, i2c, irq=None, *, debug=False):
         """Create an instance of the PN532 class using either software SPI (if
         the sclk, mosi, and miso pins are specified) or hardware SPI if a
         spi parameter is passed.  The cs pin must be a digital GPIO pin.
         Optionally specify a GPIO controller to override the default that uses
         the board's GPIO pins.
         """
-        self._i2cdevice = i2c_device.I2CDevice(i2c, PN532_I2C_ADDRESS)
-
-    def _uint8_add(self, a, b):
-        """Add add two values as unsigned 8-bit values."""
-        return ((a & 0xFF) + (b & 0xFF)) & 0xFF
-
-    def _busy_wait_ms(self, ms):
-        """Busy wait for the specified number of milliseconds."""
-        time.delay(ms/1000.0)
+        self.debug = debug
+        self._i2c = i2c_device.I2CDevice(i2c, PN532_I2C_ADDRESS)
+        self._irq = irq
+        self.get_firmware_version()
 
     def _write_frame(self, data):
         """Write a frame to the PN532 with the specified data bytearray."""
         assert data is not None and 0 < len(data) < 255, 'Data must be array of 1 to 255 bytes.'
         # Build frame to send as:
-        # - SPI data write (0x01)
         # - Preamble (0x00)
         # - Start code  (0x00, 0xFF)
         # - Command length (1 byte)
@@ -185,34 +179,31 @@ class PN532_I2C(object):
         # - Postamble (0x00)
         length = len(data)
         frame = bytearray(length+8)
-        frame[0] = PN532_SPI_DATAWRITE
-        frame[1] = PN532_PREAMBLE
-        frame[2] = PN532_STARTCODE1
-        frame[3] = PN532_STARTCODE2
-        frame[4] = length & 0xFF
-        frame[5] = self._uint8_add(~length, 1)
-        frame[6:-2] = data
-        checksum = reduce(self._uint8_add, data, 0xFF)
+        frame[0] = PN532_PREAMBLE
+        frame[1] = PN532_STARTCODE1
+        frame[2] = PN532_STARTCODE2
+        checksum = sum(frame[0:3])
+        frame[3] = length & 0xFF
+        frame[4] = (~length + 1) & 0xFF
+        frame[5:-2] = data
+        checksum += sum(data)
         frame[-2] = ~checksum & 0xFF
         frame[-1] = PN532_POSTAMBLE
         # Send frame.
-        logger.debug('Write frame: 0x{0}'.format(binascii.hexlify(frame)))
-        self._gpio.set_low(self._cs)
-        self._busy_wait_ms(2)
-        self._spi.write(frame)
-        self._gpio.set_high(self._cs)
+        if self.debug:
+            print('Write frame: ', [hex(i) for i in frame])
+        with self._i2c:
+            self._i2c.write(bytes(frame))
 
     def _read_data(self, count):
         """Read a specified count of bytes from the PN532."""
         # Build a read request frame.
         frame = bytearray(count)
-        frame[0] = PN532_SPI_DATAREAD
-        # Send the frame and return the response, ignoring the SPI header byte.
-        self._gpio.set_low(self._cs)
-        self._busy_wait_ms(2)
-        response = self._spi.transfer(frame)
-        self._gpio.set_high(self._cs)
-        return response
+        with self._i2c:
+            self._i2c.readinto(frame)
+        if self.debug:
+            print("Reading: ", [hex(i) for i in frame])
+        return frame
 
     def _read_frame(self, length):
         """Read a response frame from the PN532 of at most length bytes in size.
@@ -222,7 +213,8 @@ class PN532_I2C(object):
         """
         # Read frame with expected length of data.
         response = self._read_data(length+8)
-        logger.debug('Read frame: 0x{0}'.format(binascii.hexlify(response)))
+        if self.debug:
+            print('Read frame:', [hex(i) for i in response])
         # Check frame starts with 0x01 and then has 0x00FF (preceeded by optional
         # zeros).
         if response[0] != 0x01:
@@ -243,42 +235,24 @@ class PN532_I2C(object):
         if (frame_len + response[offset+1]) & 0xFF != 0:
             raise RuntimeError('Response length checksum did not match length!')
         # Check frame checksum value matches bytes.
-        checksum = reduce(self._uint8_add, response[offset+2:offset+2+frame_len+1], 0)
+        checksum = sum(response[offset+2:offset+2+frame_len+1]) & 0xFF
         if checksum != 0:
-            raise RuntimeError('Response checksum did not match expected value!')
+            raise RuntimeError('Response checksum did not match expected value: ', checksum)
         # Return frame data.
         return response[offset+2:offset+2+frame_len]
 
-    def _wait_ready(self, timeout_sec=1):
-        """Wait until the PN532 is ready to receive commands.  At most wait
-        timeout_sec seconds for the PN532 to be ready.  If the PN532 is ready
-        before the timeout is exceeded then True will be returned, otherwise
-        False is returned when the timeout is exceeded.
-        """
-        start = time.time()
-        # Send a SPI status read command and read response.
-        self._gpio.set_low(self._cs)
-        self._busy_wait_ms(2)
-        response = self._spi.transfer([PN532_SPI_STATREAD, 0x00])
-        self._gpio.set_high(self._cs)
-        # Loop until a ready response is received.
-        while response[1] != PN532_SPI_READY:
-            # Check if the timeout has been exceeded.
-            if time.time() - start >= timeout_sec:
-                return False
-            # Wait a little while and try reading the status again.
-            time.sleep(0.01)
-            self._gpio.set_low(self._cs)
-            self._busy_wait_ms(2)
-            response = self._spi.transfer([PN532_SPI_STATREAD, 0x00])
-            self._gpio.set_high(self._cs)
+    def _wait_ready(self, timeout=1):
+        if self._irq:
+            print("TODO IRQ")
+        else:
+            time.sleep(timeout)
         return True
 
-    def call_function(self, command, response_length=0, params=[], timeout_sec=1):
+    def call_function(self, command, response_length=0, params=[], timeout=1):
         """Send specified command to the PN532 and expect up to response_length
         bytes back in a response.  Note that less than the expected bytes might
         be returned!  Params can optionally specify an array of bytes to send as
-        parameters to the function call.  Will wait up to timeout_secs seconds
+        parameters to the function call.  Will wait up to timeout seconds
         for a response and return a bytearray of response bytes, or None if no
         response is available within the timeout.
         """
@@ -286,16 +260,16 @@ class PN532_I2C(object):
         data = bytearray(2+len(params))
         data[0]  = PN532_HOSTTOPN532
         data[1]  = command & 0xFF
-        data[2:] = params
+        for i in range(len(params)):
+            data[2+i] = params[i]
         # Send frame and wait for response.
         self._write_frame(data)
-        if not self._wait_ready(timeout_sec):
+        if not self._wait_ready(timeout):
             return None
         # Verify ACK response and wait to be ready for function response.
-        response = self._read_data(len(PN532_ACK))
-        if response != PN532_ACK:
+        if not PN532_ACK == self._read_data(len(PN532_ACK)):
             raise RuntimeError('Did not receive expected ACK from PN532!')
-        if not self._wait_ready(timeout_sec):
+        if not self._wait_ready(timeout):
             return None
         # Read response bytes.
         response = self._read_frame(response_length+2)
@@ -305,25 +279,13 @@ class PN532_I2C(object):
         # Return response data.
         return response[2:]
 
-    def begin(self):
-        """Initialize communication with the PN532.  Must be called before any
-        other calls are made against the PN532.
-        """
-        # Assert CS pin low for a second for PN532 to be ready.
-        self._gpio.set_low(self._cs)
-        time.sleep(1.0)
-        # Call GetFirmwareVersion to sync up with the PN532.  This might not be
-        # required but is done in the Arduino library and kept for consistency.
-        self.get_firmware_version()
-        self._gpio.set_high(self._cs)
-
     def get_firmware_version(self):
         """Call PN532 GetFirmwareVersion function and return a tuple with the IC,
         Ver, Rev, and Support values.
         """
-        response = self.call_function(PN532_COMMAND_GETFIRMWAREVERSION, 4)
+        response = self.call_function(PN532_COMMAND_GETFIRMWAREVERSION, 4, timeout=0.1)
         if response is None:
-            raise RuntimeError('Failed to detect the PN532!  Make sure there is sufficient power (use a 1 amp or greater power supply), the PN532 is wired correctly to the device, and the solder joints on the PN532 headers are solidly connected.')
+            raise RuntimeError('Failed to detect the PN532')
         return (response[0], response[1], response[2], response[3])
 
     def SAM_configuration(self):
@@ -336,9 +298,9 @@ class PN532_I2C(object):
         # check the command was executed as expected.
         self.call_function(PN532_COMMAND_SAMCONFIGURATION, params=[0x01, 0x14, 0x01])
 
-    def read_passive_target(self, card_baud=PN532_MIFARE_ISO14443A, timeout_sec=1):
+    def read_passive_target(self, card_baud=PN532_MIFARE_ISO14443A, timeout=1):
         """Wait for a MiFare card to be available and return its UID when found.
-        Will wait up to timeout_sec seconds and return None if no card is found,
+        Will wait up to timeout seconds and return None if no card is found,
         otherwise a bytearray with the UID of the found card is returned.
         """
         # Send passive read command for 1 card.  Expect at most a 7 byte UUID.
