@@ -167,8 +167,13 @@ class PN532_I2C(object):
         self.debug = debug
         self._i2c = i2c_device.I2CDevice(i2c, _I2C_ADDRESS)
         self._irq = irq
+        try:
+            self.get_firmware_version() # first time often fails, try 2ce
+            return
+        except:
+            pass
         self.get_firmware_version()
-
+        
     def _write_frame(self, data):
         """Write a frame to the PN532 with the specified data bytearray."""
         assert data is not None and 0 < len(data) < 255, 'Data must be array of 1 to 255 bytes.'
