@@ -30,61 +30,61 @@ import adafruit_bus_device.spi_device as spi_device
 from micropython import const
 
 
-PN532_PREAMBLE                      = const(0x00)
-PN532_STARTCODE1                    = const(0x00)
-PN532_STARTCODE2                    = const(0xFF)
-PN532_POSTAMBLE                     = const(0x00)
+_PREAMBLE                      = const(0x00)
+_STARTCODE1                    = const(0x00)
+_STARTCODE2                    = const(0xFF)
+_POSTAMBLE                     = const(0x00)
 
-PN532_HOSTTOPN532                   = const(0xD4)
-PN532_PN532TOHOST                   = const(0xD5)
+_HOSTTOPN532                   = const(0xD4)
+_PN532TOHOST                   = const(0xD5)
 
 # PN532 Commands
-PN532_COMMAND_DIAGNOSE              = const(0x00)
-PN532_COMMAND_GETFIRMWAREVERSION    = const(0x02)
-PN532_COMMAND_GETGENERALSTATUS      = const(0x04)
-PN532_COMMAND_READREGISTER          = const(0x06)
-PN532_COMMAND_WRITEREGISTER         = const(0x08)
-PN532_COMMAND_READGPIO              = const(0x0C)
-PN532_COMMAND_WRITEGPIO             = const(0x0E)
-PN532_COMMAND_SETSERIALBAUDRATE     = const(0x10)
-PN532_COMMAND_SETPARAMETERS         = const(0x12)
-PN532_COMMAND_SAMCONFIGURATION      = const(0x14)
-PN532_COMMAND_POWERDOWN             = const(0x16)
-PN532_COMMAND_RFCONFIGURATION       = const(0x32)
-PN532_COMMAND_RFREGULATIONTEST      = const(0x58)
-PN532_COMMAND_INJUMPFORDEP          = const(0x56)
-PN532_COMMAND_INJUMPFORPSL          = const(0x46)
-PN532_COMMAND_INLISTPASSIVETARGET   = const(0x4A)
-PN532_COMMAND_INATR                 = const(0x50)
-PN532_COMMAND_INPSL                 = const(0x4E)
-PN532_COMMAND_INDATAEXCHANGE        = const(0x40)
-PN532_COMMAND_INCOMMUNICATETHRU     = const(0x42)
-PN532_COMMAND_INDESELECT            = const(0x44)
-PN532_COMMAND_INRELEASE             = const(0x52)
-PN532_COMMAND_INSELECT              = const(0x54)
-PN532_COMMAND_INAUTOPOLL            = const(0x60)
-PN532_COMMAND_TGINITASTARGET        = const(0x8C)
-PN532_COMMAND_TGSETGENERALBYTES     = const(0x92)
-PN532_COMMAND_TGGETDATA             = const(0x86)
-PN532_COMMAND_TGSETDATA             = const(0x8E)
-PN532_COMMAND_TGSETMETADATA         = const(0x94)
-PN532_COMMAND_TGGETINITIATORCOMMAND = const(0x88)
-PN532_COMMAND_TGRESPONSETOINITIATOR = const(0x90)
-PN532_COMMAND_TGGETTARGETSTATUS     = const(0x8A)
+_COMMAND_DIAGNOSE              = const(0x00)
+_COMMAND_GETFIRMWAREVERSION    = const(0x02)
+_COMMAND_GETGENERALSTATUS      = const(0x04)
+_COMMAND_READREGISTER          = const(0x06)
+_COMMAND_WRITEREGISTER         = const(0x08)
+_COMMAND_READGPIO              = const(0x0C)
+_COMMAND_WRITEGPIO             = const(0x0E)
+_COMMAND_SETSERIALBAUDRATE     = const(0x10)
+_COMMAND_SETPARAMETERS         = const(0x12)
+_COMMAND_SAMCONFIGURATION      = const(0x14)
+_COMMAND_POWERDOWN             = const(0x16)
+_COMMAND_RFCONFIGURATION       = const(0x32)
+_COMMAND_RFREGULATIONTEST      = const(0x58)
+_COMMAND_INJUMPFORDEP          = const(0x56)
+_COMMAND_INJUMPFORPSL          = const(0x46)
+_COMMAND_INLISTPASSIVETARGET   = const(0x4A)
+_COMMAND_INATR                 = const(0x50)
+_COMMAND_INPSL                 = const(0x4E)
+_COMMAND_INDATAEXCHANGE        = const(0x40)
+_COMMAND_INCOMMUNICATETHRU     = const(0x42)
+_COMMAND_INDESELECT            = const(0x44)
+_COMMAND_INRELEASE             = const(0x52)
+_COMMAND_INSELECT              = const(0x54)
+_COMMAND_INAUTOPOLL            = const(0x60)
+_COMMAND_TGINITASTARGET        = const(0x8C)
+_COMMAND_TGSETGENERALBYTES     = const(0x92)
+_COMMAND_TGGETDATA             = const(0x86)
+_COMMAND_TGSETDATA             = const(0x8E)
+_COMMAND_TGSETMETADATA         = const(0x94)
+_COMMAND_TGGETINITIATORCOMMAND = const(0x88)
+_COMMAND_TGRESPONSETOINITIATOR = const(0x90)
+_COMMAND_TGGETTARGETSTATUS     = const(0x8A)
 
-PN532_RESPONSE_INDATAEXCHANGE       = const(0x41)
-PN532_RESPONSE_INLISTPASSIVETARGET  = const(0x4B)
+_RESPONSE_INDATAEXCHANGE       = const(0x41)
+_RESPONSE_INLISTPASSIVETARGET  = const(0x4B)
 
-PN532_WAKEUP                        = const(0x55)
+_WAKEUP                        = const(0x55)
 
-PN532_SPI_STATREAD                  = const(0x02)
-PN532_SPI_DATAWRITE                 = const(0x01)
-PN532_SPI_DATAREAD                  = const(0x03)
-PN532_SPI_READY                     = const(0x01)
+_SPI_STATREAD                  = const(0x02)
+_SPI_DATAWRITE                 = const(0x01)
+_SPI_DATAREAD                  = const(0x03)
+_SPI_READY                     = const(0x01)
 
-PN532_I2C_ADDRESS                   = const(0x24)
+_I2C_ADDRESS                   = const(0x24)
 
-PN532_MIFARE_ISO14443A              = 0x00
+_MIFARE_ISO14443A              = 0x00
 
 # Mifare Commands
 MIFARE_CMD_AUTH_A                   = const(0x60)
@@ -135,17 +135,20 @@ NDEF_URIPREFIX_URN_EPC_RAW          = const(0x21)
 NDEF_URIPREFIX_URN_EPC              = const(0x22)
 NDEF_URIPREFIX_URN_NFC              = const(0x23)
 
-PN532_GPIO_VALIDATIONBIT            = 0x80
-PN532_GPIO_P30                      = 0
-PN532_GPIO_P31                      = 1
-PN532_GPIO_P32                      = 2
-PN532_GPIO_P33                      = 3
-PN532_GPIO_P34                      = 4
-PN532_GPIO_P35                      = 5
+_GPIO_VALIDATIONBIT            = const(0x80)
+_GPIO_P30                      = const(0)
+_GPIO_P31                      = const(1)
+_GPIO_P32                      = const(2)
+_GPIO_P33                      = const(3)
+_GPIO_P34                      = const(4)
+_GPIO_P35                      = const(5)
 
-PN532_ACK                           = b'\x01\x00\x00\xFF\x00\xFF\x00'
-PN532_FRAME_START                   = b'\x01\x00\x00\xFF'
+_ACK                           = b'\x01\x00\x00\xFF\x00\xFF\x00'
+_FRAME_START                   = b'\x01\x00\x00\xFF'
 
+class BusyError(Exception):
+    """Base class for exceptions in this module."""
+    pass
 
 class PN532_I2C(object):
     """PN532 breakout board representation.  Requires a SPI connection to the
@@ -162,7 +165,7 @@ class PN532_I2C(object):
         the board's GPIO pins.
         """
         self.debug = debug
-        self._i2c = i2c_device.I2CDevice(i2c, PN532_I2C_ADDRESS)
+        self._i2c = i2c_device.I2CDevice(i2c, _I2C_ADDRESS)
         self._irq = irq
         self.get_firmware_version()
 
@@ -179,16 +182,16 @@ class PN532_I2C(object):
         # - Postamble (0x00)
         length = len(data)
         frame = bytearray(length+8)
-        frame[0] = PN532_PREAMBLE
-        frame[1] = PN532_STARTCODE1
-        frame[2] = PN532_STARTCODE2
+        frame[0] = _PREAMBLE
+        frame[1] = _STARTCODE1
+        frame[2] = _STARTCODE2
         checksum = sum(frame[0:3])
         frame[3] = length & 0xFF
         frame[4] = (~length + 1) & 0xFF
         frame[5:-2] = data
         checksum += sum(data)
         frame[-2] = ~checksum & 0xFF
-        frame[-1] = PN532_POSTAMBLE
+        frame[-1] = _POSTAMBLE
         # Send frame.
         if self.debug:
             print('Write frame: ', [hex(i) for i in frame])
@@ -200,6 +203,9 @@ class PN532_I2C(object):
         # Build a read request frame.
         frame = bytearray(count)
         with self._i2c:
+            self._i2c.readinto(frame, end=1) # read ready byte!
+            if frame[0] != 0x01: # not ready
+                raise BusyError
             self._i2c.readinto(frame)
         if self.debug:
             print("Reading: ", [hex(i) for i in frame])
@@ -258,7 +264,7 @@ class PN532_I2C(object):
         """
         # Build frame data with command and parameters.
         data = bytearray(2+len(params))
-        data[0]  = PN532_HOSTTOPN532
+        data[0]  = _HOSTTOPN532
         data[1]  = command & 0xFF
         for i in range(len(params)):
             data[2+i] = params[i]
@@ -267,14 +273,14 @@ class PN532_I2C(object):
         if not self._wait_ready(timeout):
             return None
         # Verify ACK response and wait to be ready for function response.
-        if not PN532_ACK == self._read_data(len(PN532_ACK)):
+        if not _ACK == self._read_data(len(_ACK)):
             raise RuntimeError('Did not receive expected ACK from PN532!')
         if not self._wait_ready(timeout):
             return None
         # Read response bytes.
         response = self._read_frame(response_length+2)
         # Check that response is for the called function.
-        if not (response[0] == PN532_PN532TOHOST and response[1] == (command+1)):
+        if not (response[0] == _PN532TOHOST and response[1] == (command+1)):
             raise RuntimeError('Received unexpected command response!')
         # Return response data.
         return response[2:]
@@ -283,10 +289,10 @@ class PN532_I2C(object):
         """Call PN532 GetFirmwareVersion function and return a tuple with the IC,
         Ver, Rev, and Support values.
         """
-        response = self.call_function(PN532_COMMAND_GETFIRMWAREVERSION, 4, timeout=0.1)
+        response = self.call_function(_COMMAND_GETFIRMWAREVERSION, 4, timeout=0.1)
         if response is None:
             raise RuntimeError('Failed to detect the PN532')
-        return (response[0], response[1], response[2], response[3])
+        return tuple(response)
 
     def SAM_configuration(self):
         """Configure the PN532 to read MiFare cards."""
@@ -296,17 +302,21 @@ class PN532_I2C(object):
         # - 0x01, use IRQ pin
         # Note that no other verification is necessary as call_function will
         # check the command was executed as expected.
-        self.call_function(PN532_COMMAND_SAMCONFIGURATION, params=[0x01, 0x14, 0x01])
+        self.call_function(_COMMAND_SAMCONFIGURATION, params=[0x01, 0x14, 0x01])
 
-    def read_passive_target(self, card_baud=PN532_MIFARE_ISO14443A, timeout=1):
+    def read_passive_target(self, card_baud=_MIFARE_ISO14443A, timeout=1):
         """Wait for a MiFare card to be available and return its UID when found.
         Will wait up to timeout seconds and return None if no card is found,
         otherwise a bytearray with the UID of the found card is returned.
         """
         # Send passive read command for 1 card.  Expect at most a 7 byte UUID.
-        response = self.call_function(PN532_COMMAND_INLISTPASSIVETARGET,
-                                      params=[0x01, card_baud],
-                                      response_length=17)
+        try:
+            response = self.call_function(_COMMAND_INLISTPASSIVETARGET,
+                                          params=[0x01, card_baud],
+                                          response_length=17,
+                                          timeout=timeout)
+        except BusyError:
+            return None # no card found!
         # If no response is available return None to indicate no card is present.
         if response is None:
             return None
@@ -336,7 +346,7 @@ class PN532_I2C(object):
         params[3:3+keylen] = key
         params[3+keylen:]  = uid
         # Send InDataExchange request and verify response is 0x00.
-        response = self.call_function(PN532_COMMAND_INDATAEXCHANGE,
+        response = self.call_function(_COMMAND_INDATAEXCHANGE,
                                       params=params,
                                       response_length=1)
         return response[0] == 0x00
@@ -348,7 +358,7 @@ class PN532_I2C(object):
         not read then None will be returned.
         """
         # Send InDataExchange request to read block of MiFare data.
-        response = self.call_function(PN532_COMMAND_INDATAEXCHANGE,
+        response = self.call_function(_COMMAND_INDATAEXCHANGE,
                                       params=[0x01, MIFARE_CMD_READ, block_number & 0xFF],
                                       response_length=17)
         # Check first response is 0x00 to show success.
@@ -371,7 +381,7 @@ class PN532_I2C(object):
         params[2] = block_number & 0xFF
         params[3:] = data
         # Send InDataExchange request.
-        response = self.call_function(PN532_COMMAND_INDATAEXCHANGE,
+        response = self.call_function(_COMMAND_INDATAEXCHANGE,
                                       params=params,
                                       response_length=1)
         return response[0] == 0x00
