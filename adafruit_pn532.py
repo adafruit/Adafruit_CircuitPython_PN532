@@ -262,17 +262,12 @@ class PN532_I2C(object):
             status = bytearray(1)
             t = time.monotonic()
             while (time.monotonic() - t) < timeout:
-                """
                 with self._i2c:
                     self._i2c.readinto(status)
-                    if status == b'\0x01':
-                        print(".ready.")
+                    if status == b'\x01':
                         return True
                     else:
-                        print(".busy.")
                         time.sleep(0.1)
-                """
-                time.sleep(timeout)
         return True
 
     def call_function(self, command, response_length=0, params=[], timeout=1):
