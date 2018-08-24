@@ -141,8 +141,8 @@ _GPIO_P33                      = const(3)
 _GPIO_P34                      = const(4)
 _GPIO_P35                      = const(5)
 
-_ACK                           = b'\x01\x00\x00\xFF\x00\xFF\x00'
-_FRAME_START                   = b'\x01\x00\x00\xFF'
+_ACK                           = b'\x00\x00\xFF\x00\xFF\x00'
+_FRAME_START                   = b'\x00\x00\xFF'
 
 class BusyError(Exception):
     """Base class for exceptions in this module."""
@@ -213,15 +213,15 @@ class PN532_I2C(object):
     def _read_data(self, count):
         """Read a specified count of bytes from the PN532."""
         # Build a read request frame.
-        frame = bytearray(count)
+        frame = bytearray(count+1)
         with self._i2c:
-            #self._i2c.readinto(frame, end=1) # read ready byte!
-            #if frame[0] != 0x01: # not ready
-            #    raise BusyError
+            self._i2c.readinto(frame, end=1) # read ready byte!
+            if frame[0] != 0x01: # not ready
+                raise BusyError
             self._i2c.readinto(frame)
         if self.debug:
-            print("Reading: ", [hex(i) for i in frame])
-        return frame
+            print("Reading: ", [hex(i) for i in frame[1:]])
+        return frame[1:]
 
     def _read_frame(self, length):
         """Read a response frame from the PN532 of at most length bytes in size.
@@ -233,12 +233,8 @@ class PN532_I2C(object):
         response = self._read_data(length+8)
         if self.debug:
             print('Read frame:', [hex(i) for i in response])
-        # Check frame starts with 0x01 and then has 0x00FF (preceeded by optional
-        # zeros).
-        if response[0] != 0x01:
-            raise RuntimeError('Response frame does not start with 0x01!')
         # Swallow all the 0x00 values that preceed 0xFF.
-        offset = 1
+        offset = 0
         while response[offset] == 0x00:
             offset += 1
             if offset >= len(response):
@@ -263,20 +259,20 @@ class PN532_I2C(object):
         if self._irq:
             print("TODO IRQ")
         else:
-            """
             status = bytearray(1)
             t = time.monotonic()
             while (time.monotonic() - t) < timeout:
+                """
                 with self._i2c:
                     self._i2c.readinto(status)
                     if status == b'\0x01':
                         print(".ready.")
                         return True
                     else:
-                        time.sleep(0.1)
                         print(".busy.")
-            """
-            time.sleep(timeout)
+                        time.sleep(0.1)
+                """
+                time.sleep(timeout)
         return True
 
     def call_function(self, command, response_length=0, params=[], timeout=1):
