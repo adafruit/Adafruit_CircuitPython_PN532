@@ -148,22 +148,13 @@ class BusyError(Exception):
     """Base class for exceptions in this module."""
     pass
 
-class PN532_I2C(object):
-    """PN532 breakout board representation.  Requires a SPI connection to the
-    breakout board.  A software SPI connection is recommended as the hardware
-    SPI on the Raspberry Pi has some issues with the LSB first mode used by the
-    PN532 (see: http://www.raspberrypi.org/forums/viewtopic.php?f=32&t=98070&p=720659#p720659)
-    """
+class PN532:
+    """PN532 driver base, must be extended for I2C/SPI/UART interfacing"""
 
-    def __init__(self, i2c, *, irq=None, reset=None, debug=False):
-        """Create an instance of the PN532 class using either software SPI (if
-        the sclk, mosi, and miso pins are specified) or hardware SPI if a
-        spi parameter is passed.  The cs pin must be a digital GPIO pin.
-        Optionally specify a GPIO controller to override the default that uses
-        the board's GPIO pins.
+    def __init__(self, *, debug=False, reset=None):
+        """Create an instance of the PN532 class
         """
         self.debug = debug
-        self._irq = irq
         if reset:
             print("resetting")
             reset.direction = Direction.OUTPUT
@@ -173,14 +164,29 @@ class PN532_I2C(object):
             time.sleep(0.1)
             reset.value = True
             time.sleep(1)
-        self._i2c = i2c_device.I2CDevice(i2c, _I2C_ADDRESS)
         try:
             self.get_firmware_version() # first time often fails, try 2ce
             return
         except:
             pass
         self.get_firmware_version()
-        
+
+    def _read_data(self, count):
+        # Read raw data from device, not including status bytes:
+        # Subclasses MUST implement this!
+        raise NotImplementedError
+    
+    def _write_data(self, framebytes):
+        # Write raw bytestring data to device, not including status bytes:
+        # Subclasses MUST implement this!
+        raise NotImplementedError
+
+    def _wait_ready(self, timeout):
+        # Check if busy up to max length of 'timeout' seconds
+        # Subclasses MUST implement this!
+        raise NotImplementedError
+
+
     def _write_frame(self, data):
         """Write a frame to the PN532 with the specified data bytearray."""
         assert data is not None and 0 < len(data) < 255, 'Data must be array of 1 to 255 bytes.'
@@ -207,21 +213,7 @@ class PN532_I2C(object):
         # Send frame.
         if self.debug:
             print('Write frame: ', [hex(i) for i in frame])
-        with self._i2c:
-            self._i2c.write(bytes(frame))
-
-    def _read_data(self, count):
-        """Read a specified count of bytes from the PN532."""
-        # Build a read request frame.
-        frame = bytearray(count+1)
-        with self._i2c:
-            self._i2c.readinto(frame, end=1) # read ready byte!
-            if frame[0] != 0x01: # not ready
-                raise BusyError
-            self._i2c.readinto(frame)
-        if self.debug:
-            print("Reading: ", [hex(i) for i in frame[1:]])
-        return frame[1:]
+        self._write_data(bytes(frame))
 
     def _read_frame(self, length):
         """Read a response frame from the PN532 of at most length bytes in size.
@@ -254,21 +246,6 @@ class PN532_I2C(object):
             raise RuntimeError('Response checksum did not match expected value: ', checksum)
         # Return frame data.
         return response[offset+2:offset+2+frame_len]
-
-    def _wait_ready(self, timeout=1):
-        if self._irq:
-            print("TODO IRQ")
-        else:
-            status = bytearray(1)
-            t = time.monotonic()
-            while (time.monotonic() - t) < timeout:
-                with self._i2c:
-                    self._i2c.readinto(status)
-                    if status == b'\x01':
-                        return True
-                    else:
-                        time.sleep(0.1)
-        return True
 
     def call_function(self, command, response_length=0, params=[], timeout=1):
         """Send specified command to the PN532 and expect up to response_length
@@ -400,4 +377,52 @@ class PN532_I2C(object):
         response = self.call_function(_COMMAND_INDATAEXCHANGE,
                                       params=params,
                                       response_length=1)
-        return response[0] == 0x00
+        return response[0] == 0x0
+
+
+
+class PN532_I2C(PN532):
+    """Driver for the PN532 connected over I2C."""
+    def __init__(self, i2c, *, irq=None, reset=None, debug=False):
+        """Create an instance of the PN532 class using either software SPI (if
+        the sclk, mosi, and miso pins are specified) or hardware SPI if a
+        spi parameter is passed.  The cs pin must be a digital GPIO pin.
+        Optionally specify a GPIO controller to override the default that uses
+        the board's GPIO pins.
+        """
+        self.debug = debug
+        self._irq = irq
+        self._i2c = i2c_device.I2CDevice(i2c, _I2C_ADDRESS)
+        super().__init__(debug=debug, reset=reset)
+
+    def _wait_ready(self, timeout=1):
+        if self._irq:
+            print("TODO IRQ")
+        else:
+            status = bytearray(1)
+            t = time.monotonic()
+            while (time.monotonic() - t) < timeout:
+                with self._i2c:
+                    self._i2c.readinto(status)
+                    if status == b'\x01':
+                        return True
+                    else:
+                        time.sleep(0.1)
+        return True
+
+    def _read_data(self, count):
+        """Read a specified count of bytes from the PN532."""
+        # Build a read request frame.
+        frame = bytearray(count+1)
+        with self._i2c:
+            self._i2c.readinto(frame, end=1) # read ready byte!
+            if frame[0] != 0x01: # not ready
+                raise BusyError
+            self._i2c.readinto(frame)
+        if self.debug:
+            print("Reading: ", [hex(i) for i in frame[1:]])
+        return frame[1:]
+
+    def _write_data(self, framebytes):
+        with self._i2c:
+            self._i2c.write(framebytes)
