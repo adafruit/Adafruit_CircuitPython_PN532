@@ -20,10 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-#import binascii
-#from functools import reduce
-#import logging
 import time
+from digitalio import DigitalInOut, Direction
 import adafruit_bus_device.i2c_device as i2c_device
 import adafruit_bus_device.spi_device as spi_device
 
@@ -157,7 +155,7 @@ class PN532_I2C(object):
     PN532 (see: http://www.raspberrypi.org/forums/viewtopic.php?f=32&t=98070&p=720659#p720659)
     """
 
-    def __init__(self, i2c, irq=None, *, debug=False):
+    def __init__(self, i2c, *, irq=None, reset=None, debug=False):
         """Create an instance of the PN532 class using either software SPI (if
         the sclk, mosi, and miso pins are specified) or hardware SPI if a
         spi parameter is passed.  The cs pin must be a digital GPIO pin.
@@ -165,8 +163,17 @@ class PN532_I2C(object):
         the board's GPIO pins.
         """
         self.debug = debug
-        self._i2c = i2c_device.I2CDevice(i2c, _I2C_ADDRESS)
         self._irq = irq
+        if reset:
+            print("resetting")
+            reset.direction = Direction.OUTPUT
+            reset.value = True
+            time.sleep(0.1)
+            reset.value = False
+            time.sleep(0.1)
+            reset.value = True
+            time.sleep(1)
+        self._i2c = i2c_device.I2CDevice(i2c, _I2C_ADDRESS)
         try:
             self.get_firmware_version() # first time often fails, try 2ce
             return
@@ -208,9 +215,9 @@ class PN532_I2C(object):
         # Build a read request frame.
         frame = bytearray(count)
         with self._i2c:
-            self._i2c.readinto(frame, end=1) # read ready byte!
-            if frame[0] != 0x01: # not ready
-                raise BusyError
+            #self._i2c.readinto(frame, end=1) # read ready byte!
+            #if frame[0] != 0x01: # not ready
+            #    raise BusyError
             self._i2c.readinto(frame)
         if self.debug:
             print("Reading: ", [hex(i) for i in frame])
@@ -256,6 +263,19 @@ class PN532_I2C(object):
         if self._irq:
             print("TODO IRQ")
         else:
+            """
+            status = bytearray(1)
+            t = time.monotonic()
+            while (time.monotonic() - t) < timeout:
+                with self._i2c:
+                    self._i2c.readinto(status)
+                    if status == b'\0x01':
+                        print(".ready.")
+                        return True
+                    else:
+                        time.sleep(0.1)
+                        print(".busy.")
+            """
             time.sleep(timeout)
         return True
 
