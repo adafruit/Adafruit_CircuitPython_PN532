@@ -456,7 +456,7 @@ class PN532:
                                       params=params,
                                       response_length=1)
         return response[0] == 0x00
-    
+
     def ntag2xx_read_block(self, block_number):
         """Read a block of data from the card.  Block number should be the block
         to read.  If the block is successfully read a bytearray of length 16 with
