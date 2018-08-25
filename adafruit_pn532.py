@@ -174,6 +174,7 @@ class PN532:
             reset.value = True
             time.sleep(1)
         try:
+            self._wakeup()
             self.get_firmware_version() # first time often fails, try 2ce
             return
         except:
@@ -389,6 +390,38 @@ class PN532:
         return response[0] == 0x0
 
 
+class PN532_UART(PN532):
+    """Driver for the PN532 connected over Serial UART"""
+    def __init__(self, uart, *, irq=None, reset=None, debug=False):
+        """Create an instance of the PN532 class using Serial connection
+        """
+        self.debug = debug
+        self._irq = irq
+        self._uart = uart
+        super().__init__(debug=debug, reset=reset)
+
+    def _wakeup(self):
+        #self._write_frame([_HOSTTOPN532, _COMMAND_SAMCONFIGURATION, 0x01])
+        self.SAM_configuration()
+
+    def _wait_ready(self, timeout=1):
+        time.sleep(timeout)
+        return True
+
+    def _read_data(self, count):
+        """Read a specified count of bytes from the PN532."""
+        frame = self._uart.read(count)
+        if not frame:
+            raise BusyError("No data read from PN532")
+        if self.debug:
+            print("Reading: ", [hex(i) for i in frame])
+        return frame
+
+    def _write_data(self, framebytes):
+        while self._uart.read(1):  # this would be a lot nicer if we could query the # of bytes
+            pass
+        self._uart.write('\x55\x55\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00') # wake up!
+        self._uart.write(framebytes)
 
 class PN532_I2C(PN532):
     """Driver for the PN532 connected over I2C."""
@@ -403,6 +436,9 @@ class PN532_I2C(PN532):
         self._irq = irq
         self._i2c = i2c_device.I2CDevice(i2c, _I2C_ADDRESS)
         super().__init__(debug=debug, reset=reset)
+
+    def _wakeup(self):
+        time.sleep(0.5)
 
     def _wait_ready(self, timeout=1):
         status = bytearray(1)
@@ -443,6 +479,10 @@ class PN532_SPI(PN532):
         self._irq = irq
         self._spi = spi_device.SPIDevice(spi, cs_pin)
         super().__init__(debug=debug, reset=reset)
+
+    def _wakeup(self):
+        with self._spi as spi:
+            time.sleep(1)
 
     def _wait_ready(self, timeout=1):
         status = bytearray([reverse_bit(_SPI_STATREAD), 0])
