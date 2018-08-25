@@ -1,5 +1,8 @@
 # Adafruit PN532 NFC/RFID control library.
 # Author: Tony DiCola
+#
+# The MIT License (MIT)
+#
 # Copyright (c) 2015-2018 Adafruit Industries
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,6 +22,31 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+"""
+`adafruit_PN532`
+====================================================
+
+This module will let you communicate with a PN532 RFID/NFC shield or breakout
+using I2C, SPI or UART.
+
+* Author(s): Original Raspberry Pi code by Tony DiCola, CircuitPython by ladyada
+
+Implementation Notes
+--------------------
+
+**Hardware:**
+
+* Adafruit `PN532 Breakout <https://www.adafruit.com/product/364>`_
+* Adafruit `PN532 Shield <https://www.adafruit.com/product/789>`_
+
+**Software and Dependencies:**
+
+* Adafruit CircuitPython firmware for the supported boards:
+  https://github.com/adafruit/circuitpython/releases
+  
+ * Adafruit's Bus Device library: https://github.com/adafruit/Adafruit_CircuitPython_BusDevice
+"""
+
 
 import time
 from digitalio import DigitalInOut, Direction
@@ -26,6 +54,9 @@ import adafruit_bus_device.i2c_device as i2c_device
 import adafruit_bus_device.spi_device as spi_device
 
 from micropython import const
+
+__version__ = "0.0.0-auto.0"
+__repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_PN532.git"
 
 
 _PREAMBLE                      = const(0x00)
@@ -82,7 +113,7 @@ _SPI_READY                     = const(0x01)
 
 _I2C_ADDRESS                   = const(0x24)
 
-_MIFARE_ISO14443A              = 0x00
+_MIFARE_ISO14443A              = const(0x00)
 
 # Mifare Commands
 MIFARE_CMD_AUTH_A                   = const(0x60)
