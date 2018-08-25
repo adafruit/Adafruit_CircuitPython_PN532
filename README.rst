@@ -13,7 +13,7 @@ Introduction
     :target: https://travis-ci.org/adafruit/adafruit_CircuitPython_PN532
     :alt: Build Status
 
-.. todo:: Describe what the library does.
+CircuitPython driver for the `PN532 NFC/RFID Breakout <https://www.adafruit.com/product/364>`_ and `PN532 NFC/RFID Shield <https://www.adafruit.com/product/789>`_
 
 Dependencies
 =============
@@ -29,7 +29,7 @@ This is easily achieved by downloading
 Usage Example
 =============
 
-.. todo:: Add a quick, simple example. It and other examples should live in the examples folder and be included in docs/examples.rst.
+Check examples/pn532_simpletest.py for usage example
 
 Contributing
 ============

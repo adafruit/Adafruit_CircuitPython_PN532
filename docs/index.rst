@@ -23,14 +23,11 @@ Table of Contents
 .. toctree::
     :caption: Tutorials
 
-.. todo:: Add any Learn guide links here. If there are none, then simply delete this todo and leave
-    the toctree above for use later.
-
 .. toctree::
     :caption: Related Products
 
-.. todo:: Add any product links here. If there are none, then simply delete this todo and leave
-    the toctree above for use later.
+    `PN532 NFC/RFID Breakout <https://www.adafruit.com/product/364>` and `PN532 NFC/RFID Shield <https://www.adafruit.com/product/789>`_
+
 
 .. toctree::
     :caption: Other Links
