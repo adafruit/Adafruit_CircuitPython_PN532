@@ -405,61 +405,57 @@ class PN532_I2C(PN532):
         super().__init__(debug=debug, reset=reset)
 
     def _wait_ready(self, timeout=1):
-        if self._irq:
-            print("TODO IRQ")
-        else:
-            status = bytearray(1)
-            t = time.monotonic()
-            while (time.monotonic() - t) < timeout:
-                with self._i2c:
-                    self._i2c.readinto(status)
-                    if status == b'\x01':
-                        return True
-                    else:
-                        time.sleep(0.1)
+        status = bytearray(1)
+        t = time.monotonic()
+        while (time.monotonic() - t) < timeout:
+            with self._i2c:
+                self._i2c.readinto(status)
+            if status == b'\x01':
+                return True  # No longer busy
+            else:
+                time.sleep(0.1)  # lets ask again soon!
+        # Timed out!
         return False
 
     def _read_data(self, count):
         """Read a specified count of bytes from the PN532."""
         # Build a read request frame.
         frame = bytearray(count+1)
-        with self._i2c:
-            self._i2c.readinto(frame, end=1) # read ready byte!
-            if frame[0] != 0x01: # not ready
+        with self._i2c as i2c:
+            i2c.readinto(frame, end=1) # read status byte!
+            if frame[0] != 0x01:             # not ready
                 raise BusyError
-            self._i2c.readinto(frame)
+            i2c.readinto(frame)        # ok get the data, plus statusbyte
         if self.debug:
             print("Reading: ", [hex(i) for i in frame[1:]])
-        return frame[1:]
+        return frame[1:]   # don't return the status byte
 
     def _write_data(self, framebytes):
-        with self._i2c:
-            self._i2c.write(framebytes)
+        with self._i2c as i2c:
+            i2c.write(framebytes)
 
 class PN532_SPI(PN532):
-    """Driver for the PN532 connected over I2C."""
+    """Driver for the PN532 connected over SPI. Pass in a hardware or bitbang SPI device & chip select
+    digitalInOut pin. Optional IRQ pin (not used), reset pin and debugging output."""
     def __init__(self, spi, cs_pin, *, irq=None, reset=None, debug=False):
-        """Create an instance of the PN532 class using SPI
-        """
+        """Create an instance of the PN532 class using SPI"""
         self.debug = debug
         self._irq = irq
         self._spi = spi_device.SPIDevice(spi, cs_pin)
         super().__init__(debug=debug, reset=reset)
 
     def _wait_ready(self, timeout=1):
-        if self._irq:
-            print("TODO IRQ")
-        else:
-            status = bytearray([reverse_bit(_SPI_STATREAD), 0])
-
-            t = time.monotonic()
-            while (time.monotonic() - t) < timeout:
-                with self._spi as spi:
-                    spi.write_readinto(status, status)
-                if reverse_bit(status[1]) == 0x01:  # LSB data is read in MSB
-                    return True
-                else:
-                    time.sleep(0.1)
+        status = bytearray([reverse_bit(_SPI_STATREAD), 0])
+        
+        t = time.monotonic()
+        while (time.monotonic() - t) < timeout:
+            with self._spi as spi:
+                spi.write_readinto(status, status)
+            if reverse_bit(status[1]) == 0x01:  # LSB data is read in MSB
+                return True      # Not busy anymore!
+            else:
+                time.sleep(0.1)  # pause a bit till we ask again
+        # We timed out!
         return False
 
     def _read_data(self, count):
@@ -470,18 +466,19 @@ class PN532_SPI(PN532):
         frame[0] = reverse_bit(_SPI_DATAREAD)
         
         with self._spi as spi:
-            time.sleep(0.01)
+            time.sleep(0.01)   # required
             spi.write_readinto(frame, frame)
-            for i in range(len(frame)):
-                frame[i] = reverse_bit(frame[i]) # turn LSB data to MSB
+        for i in range(len(frame)):
+            frame[i] = reverse_bit(frame[i]) # turn LSB data to MSB
         if self.debug:
             print("Reading: ", [hex(i) for i in frame[1:]])
         return frame[1:]
 
     def _write_data(self, framebytes):
+        # start by making a frame with data write in front, then rest of bytes, and LSBify  it
+        reversed = [reverse_bit(x) for x in bytes([_SPI_DATAWRITE]) + framebytes]
+        if self.debug:
+            print("Writing: ", [hex(i) for i in reversed])
         with self._spi as spi:
-            reversed = [reverse_bit(x) for x in bytes([_SPI_DATAWRITE]) + framebytes]
-            time.sleep(0.01)
-            if self.debug:
-                print("writing: ", [hex(i) for i in reversed])
+            time.sleep(0.01)   # required
             spi.write(bytes(reversed))
