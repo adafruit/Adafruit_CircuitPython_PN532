@@ -365,7 +365,7 @@ class PN532:
         try:
             response = self.call_function(_COMMAND_INLISTPASSIVETARGET,
                                           params=[0x01, card_baud],
-                                          response_length=17,
+                                          response_length=19,
                                           timeout=timeout)
         except BusyError:
             return None # no card found!
@@ -438,6 +438,32 @@ class PN532:
                                       response_length=1)
         return response[0] == 0x0
 
+    def ntag2xx_write_block(self, block_number, data):
+        """Write a block of data to the card.  Block number should be the block
+        to write and data should be a byte array of length 4 with the data to
+        write.  If the data is successfully written then True is returned,
+        otherwise False is returned.
+        """
+        assert data is not None and len(data) == 4, 'Data must be an array of 4 bytes!'
+        # Build parameters for InDataExchange command to do NTAG203 classic write.
+        params = bytearray(3+len(data))
+        params[0] = 0x01  # Max card numbers
+        params[1] = MIFARE_ULTRALIGHT_CMD_WRITE
+        params[2] = block_number & 0xFF
+        params[3:] = data
+        # Send InDataExchange request.
+        response = self.call_function(_COMMAND_INDATAEXCHANGE,
+                                      params=params,
+                                      response_length=1)
+        return response[0] == 0x00
+    
+    def ntag2xx_read_block(self, block_number):
+        """Read a block of data from the card.  Block number should be the block
+        to read.  If the block is successfully read a bytearray of length 16 with
+        data starting at the specified block will be returned.  If the block is
+        not read then None will be returned.
+        """
+        return self.mifare_classic_read_block(block_number)[0:4] # only 4 bytes per page
 
 class PN532_UART(PN532):
     """Driver for the PN532 connected over Serial UART"""
