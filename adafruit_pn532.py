@@ -291,7 +291,7 @@ class PN532:
         """Call PN532 GetFirmwareVersion function and return a tuple with the IC,
         Ver, Rev, and Support values.
         """
-        response = self.call_function(_COMMAND_GETFIRMWAREVERSION, 4, timeout=0.1)
+        response = self.call_function(_COMMAND_GETFIRMWAREVERSION, 4, timeout=0.5)
         if response is None:
             raise RuntimeError('Failed to detect the PN532')
         return tuple(response)
