@@ -583,7 +583,7 @@ class PN532_SPI(PN532):
         """Send any special commands/data to wake up PN532"""
         with self._spi as spi:
             time.sleep(1)
-            spi.write(bytearray([0x00]))
+            spi.write(bytearray([0x00])) #pylint: disable=no-member
             time.sleep(1)
 
     def _wait_ready(self, timeout=1):
@@ -594,7 +594,7 @@ class PN532_SPI(PN532):
         while (time.monotonic() - timestamp) < timeout:
             with self._spi as spi:
                 time.sleep(0.02)   # required
-                spi.write_readinto(status, status)
+                spi.write_readinto(status, status) #pylint: disable=no-member
             if reverse_bit(status[1]) == 0x01:  # LSB data is read in MSB
                 return True      # Not busy anymore!
             else:
@@ -611,7 +611,7 @@ class PN532_SPI(PN532):
 
         with self._spi as spi:
             time.sleep(0.02)   # required
-            spi.write_readinto(frame, frame)
+            spi.write_readinto(frame, frame) #pylint: disable=no-member
         for i, val in enumerate(frame):
             frame[i] = reverse_bit(val) # turn LSB data to MSB
         if self.debug:
@@ -627,4 +627,4 @@ class PN532_SPI(PN532):
             print("Writing: ", [hex(i) for i in rev_frame])
         with self._spi as spi:
             time.sleep(0.02)   # required
-            spi.write(bytes(rev_frame))
+            spi.write(bytes(rev_frame)) #pylint: disable=no-member
