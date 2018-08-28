@@ -8,7 +8,7 @@ After initialization, try waving various 13.56MHz RFID cards over it!
 import board
 import busio
 from digitalio import DigitalInOut
-from Adafruit_Circuitpython_PN532 import adafruit_pn532
+import adafruit_pn532
 
 # I2C connection:
 i2c = busio.I2C(board.SCL, board.SDA)
