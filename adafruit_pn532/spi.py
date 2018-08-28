@@ -38,11 +38,12 @@ __version__ = "0.0.0-auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_PN532.git"
 
 import time
-from adafruit_pn532.adafruit_pn532 import PN532 
 import adafruit_bus_device.spi_device as spi_device
+from adafruit_pn532.adafruit_pn532 import PN532
 
 from micropython import const
 
+# pylint: disable=bad-whitespace
 _SPI_STATREAD                  = const(0x02)
 _SPI_DATAWRITE                 = const(0x01)
 _SPI_DATAREAD                  = const(0x03)

@@ -38,11 +38,13 @@ __version__ = "0.0.0-auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_PN532.git"
 
 import time
-from adafruit_pn532.adafruit_pn532 import PN532 
 import adafruit_bus_device.i2c_device as i2c_device
+from digitalio import Direction
+from adafruit_pn532.adafruit_pn532 import PN532, BusyError, _reset
 
 from micropython import const
 
+# pylint: disable=bad-whitespace
 _I2C_ADDRESS                   = const(0x24)
 
 class PN532_I2C(PN532):
@@ -96,7 +98,7 @@ class PN532_I2C(PN532):
         with self._i2c as i2c:
             i2c.readinto(frame, end=1) # read status byte!
             if frame[0] != 0x01:             # not ready
-                raise pn532.BusyError
+                raise BusyError
             i2c.readinto(frame)        # ok get the data, plus statusbyte
         if self.debug:
             print("Reading: ", [hex(i) for i in frame[1:]])
