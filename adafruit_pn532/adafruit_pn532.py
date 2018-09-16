@@ -46,11 +46,8 @@ Implementation Notes
 * Adafruit's Bus Device library: https://github.com/adafruit/Adafruit_CircuitPython_BusDevice
 """
 
-
 import time
 from digitalio import Direction
-import adafruit_bus_device.i2c_device as i2c_device
-import adafruit_bus_device.spi_device as spi_device
 
 from micropython import const
 
@@ -104,13 +101,6 @@ _RESPONSE_INDATAEXCHANGE       = const(0x41)
 _RESPONSE_INLISTPASSIVETARGET  = const(0x4B)
 
 _WAKEUP                        = const(0x55)
-
-_SPI_STATREAD                  = const(0x02)
-_SPI_DATAWRITE                 = const(0x01)
-_SPI_DATAREAD                  = const(0x03)
-_SPI_READY                     = const(0x01)
-
-_I2C_ADDRESS                   = const(0x24)
 
 _MIFARE_ISO14443A              = const(0x00)
 
@@ -186,21 +176,11 @@ def _reset(pin):
     pin.value = True
     time.sleep(0.1)
 
-def reverse_bit(num):
-    """Turn an LSB byte to an MSB byte, and vice versa. Used for SPI as
-    it is LSB for the PN532, but 99% of SPI implementations are MSB only!"""
-    result = 0
-    for _ in range(8):
-        result <<= 1
-        result += (num & 1)
-        num >>= 1
-    return result
-
-
 
 class BusyError(Exception):
     """Base class for exceptions in this module."""
     pass
+
 
 class PN532:
     """PN532 driver base, must be extended for I2C/SPI/UART interfacing"""
@@ -464,167 +444,3 @@ class PN532:
         not read then None will be returned.
         """
         return self.mifare_classic_read_block(block_number)[0:4] # only 4 bytes per page
-
-class PN532_UART(PN532):
-    """Driver for the PN532 connected over Serial UART"""
-    def __init__(self, uart, *, irq=None, reset=None, debug=False):
-        """Create an instance of the PN532 class using Serial connection.
-        Optional IRQ pin (not used), reset pin and debugging output.
-        """
-        self.debug = debug
-        self._irq = irq
-        self._uart = uart
-        super().__init__(debug=debug, reset=reset)
-
-    def _wakeup(self):
-        """Send any special commands/data to wake up PN532"""
-        #self._write_frame([_HOSTTOPN532, _COMMAND_SAMCONFIGURATION, 0x01])
-        self.SAM_configuration()
-
-    def _wait_ready(self, timeout=1):
-        """Wait `timeout` seconds"""
-        time.sleep(timeout)
-        return True
-
-    def _read_data(self, count):
-        """Read a specified count of bytes from the PN532."""
-        frame = self._uart.read(count)
-        if not frame:
-            raise BusyError("No data read from PN532")
-        if self.debug:
-            print("Reading: ", [hex(i) for i in frame])
-        else:
-            time.sleep(0.1)
-        return frame
-
-    def _write_data(self, framebytes):
-        """Write a specified count of bytes to the PN532"""
-        while self._uart.read(1):  # this would be a lot nicer if we could query the # of bytes
-            pass
-        self._uart.write('\x55\x55\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00') # wake up!
-        self._uart.write(framebytes)
-
-class PN532_I2C(PN532):
-    """Driver for the PN532 connected over I2C."""
-    def __init__(self, i2c, *, irq=None, reset=None, req=None, debug=False):
-        """Create an instance of the PN532 class using I2C. Note that PN532
-        uses clock stretching. Optional IRQ pin (not used),
-        reset pin and debugging output.
-        """
-        self.debug = debug
-        self._irq = irq
-        self._req = req
-        if reset:
-            _reset(reset)
-        self._i2c = i2c_device.I2CDevice(i2c, _I2C_ADDRESS)
-        super().__init__(debug=debug, reset=reset)
-
-    def _wakeup(self): # pylint: disable=no-self-use
-        """Send any special commands/data to wake up PN532"""
-        if self._req:
-            self._req.direction = Direction.OUTPUT
-            self._req.value = True
-            time.sleep(0.1)
-            self._req.value = False
-            time.sleep(0.1)
-            self._req.value = True
-        time.sleep(0.5)
-
-    def _wait_ready(self, timeout=1):
-        """Poll PN532 if status byte is ready, up to `timeout` seconds"""
-        status = bytearray(1)
-        timestamp = time.monotonic()
-        while (time.monotonic() - timestamp) < timeout:
-            try:
-                with self._i2c:
-                    self._i2c.readinto(status)
-            except OSError:
-                self._wakeup()
-                continue
-            if status == b'\x01':
-                return True  # No longer busy
-            else:
-                time.sleep(0.05)  # lets ask again soon!
-        # Timed out!
-        return False
-
-    def _read_data(self, count):
-        """Read a specified count of bytes from the PN532."""
-        # Build a read request frame.
-        frame = bytearray(count+1)
-        with self._i2c as i2c:
-            i2c.readinto(frame, end=1) # read status byte!
-            if frame[0] != 0x01:             # not ready
-                raise BusyError
-            i2c.readinto(frame)        # ok get the data, plus statusbyte
-        if self.debug:
-            print("Reading: ", [hex(i) for i in frame[1:]])
-        else:
-            time.sleep(0.1)
-        return frame[1:]   # don't return the status byte
-
-    def _write_data(self, framebytes):
-        """Write a specified count of bytes to the PN532"""
-        with self._i2c as i2c:
-            i2c.write(framebytes)
-
-class PN532_SPI(PN532):
-    """Driver for the PN532 connected over SPI. Pass in a hardware or bitbang
-    SPI device & chip select digitalInOut pin. Optional IRQ pin (not used),
-    reset pin and debugging output."""
-    def __init__(self, spi, cs_pin, *, irq=None, reset=None, debug=False):
-        """Create an instance of the PN532 class using SPI"""
-        self.debug = debug
-        self._irq = irq
-        self._spi = spi_device.SPIDevice(spi, cs_pin)
-        super().__init__(debug=debug, reset=reset)
-
-    def _wakeup(self):
-        """Send any special commands/data to wake up PN532"""
-        with self._spi as spi:
-            time.sleep(1)
-            spi.write(bytearray([0x00])) #pylint: disable=no-member
-            time.sleep(1)
-
-    def _wait_ready(self, timeout=1):
-        """Poll PN532 if status byte is ready, up to `timeout` seconds"""
-        status = bytearray([reverse_bit(_SPI_STATREAD), 0])
-
-        timestamp = time.monotonic()
-        while (time.monotonic() - timestamp) < timeout:
-            with self._spi as spi:
-                time.sleep(0.02)   # required
-                spi.write_readinto(status, status) #pylint: disable=no-member
-            if reverse_bit(status[1]) == 0x01:  # LSB data is read in MSB
-                return True      # Not busy anymore!
-            else:
-                time.sleep(0.01)  # pause a bit till we ask again
-        # We timed out!
-        return False
-
-    def _read_data(self, count):
-        """Read a specified count of bytes from the PN532."""
-        # Build a read request frame.
-        frame = bytearray(count+1)
-        # Add the SPI data read signal byte, but LSB'ify it
-        frame[0] = reverse_bit(_SPI_DATAREAD)
-
-        with self._spi as spi:
-            time.sleep(0.02)   # required
-            spi.write_readinto(frame, frame) #pylint: disable=no-member
-        for i, val in enumerate(frame):
-            frame[i] = reverse_bit(val) # turn LSB data to MSB
-        if self.debug:
-            print("Reading: ", [hex(i) for i in frame[1:]])
-        return frame[1:]
-
-    def _write_data(self, framebytes):
-        """Write a specified count of bytes to the PN532"""
-        # start by making a frame with data write in front,
-        # then rest of bytes, and LSBify it
-        rev_frame = [reverse_bit(x) for x in bytes([_SPI_DATAWRITE]) + framebytes]
-        if self.debug:
-            print("Writing: ", [hex(i) for i in rev_frame])
-        with self._spi as spi:
-            time.sleep(0.02)   # required
-            spi.write(bytes(rev_frame)) #pylint: disable=no-member
