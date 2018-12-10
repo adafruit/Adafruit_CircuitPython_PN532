@@ -56,5 +56,5 @@ setup(
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
-    py_modules=['adafruit_pn532'],
+    packages=['adafruit_pn532'],
 )
