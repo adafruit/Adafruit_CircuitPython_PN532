@@ -68,7 +68,7 @@ print('Waiting for RFID/NFC card to write to!')
 while True:
     # Check if a card is available to read
     uid = pn532.read_passive_target(timeout=0.5)
-    print('.', end="", flush=True)
+    print('.', end="")
     # Try again if no card is available.
     if uid is not None:
         break
@@ -78,7 +78,7 @@ print('Found card with UID:', [hex(i) for i in uid])
 
 # Set 4 bytes of block to 0xFEEDBEEF
 data = bytearray(4)
-data[0:4] = [0xFE, 0xED, 0xBE, 0xEF]
+data[0:4] = b'\xFE\xED\xBE\xEF'
 # Write 4 byte block.
 pn532.ntag2xx_write_block(6, data)
 # Read block #6
