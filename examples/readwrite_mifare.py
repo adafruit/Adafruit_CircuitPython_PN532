@@ -29,11 +29,10 @@ type RFID tag
 
 import board
 import busio
-from digitalio import DigitalInOut
 #
 # NOTE: pick the import that matches the interface being used
 #
-from adafruit_pn532.adafruit_pn532 import MIFARE_CMD_AUTH_B  
+from adafruit_pn532.adafruit_pn532 import MIFARE_CMD_AUTH_B
 from adafruit_pn532.i2c import PN532_I2C
 #from adafruit_pn532.spi import PN532_SPI
 #from adafruit_pn532.uart import PN532_UART
@@ -84,7 +83,7 @@ print("")
 print('Found card with UID:', [hex(i) for i in uid])
 print("Authenticating block 4 ...")
 
-authenticated = pn532.mifare_classic_authenticate_block(uid,4,MIFARE_CMD_AUTH_B,key)
+authenticated = pn532.mifare_classic_authenticate_block(uid, 4, MIFARE_CMD_AUTH_B, key)
 if not authenticated:
     print("Authentication failed!")
 
