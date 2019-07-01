@@ -76,14 +76,14 @@ class PN532_SPI(PN532):
         status = bytearray([reverse_bit(_SPI_STATREAD), 0])
 
         timestamp = time.monotonic()
-        while (time.monotonic() - timestamp) < timeout:
-            with self._spi as spi:
-                #time.sleep(0.02)   # required
+        with self._spi as spi:
+            while (time.monotonic() - timestamp) < timeout:
+                time.sleep(0.02)   # required (not needed when tested on rPi 3)
                 spi.write_readinto(status, status) #pylint: disable=no-member
-            if reverse_bit(status[1]) == 0x01:  # LSB data is read in MSB
-                return True      # Not busy anymore!
-            #else:
-            #    time.sleep(0.01)  # pause a bit till we ask again
+                if reverse_bit(status[1]) == 0x01:  # LSB data is read in MSB
+                    return True      # Not busy anymore!
+                else: # (not needed when tested on rPi 3)
+                    time.sleep(0.01)  # pause a bit till we ask again
         # We timed out!
         return False
 
@@ -95,12 +95,12 @@ class PN532_SPI(PN532):
         frame[0] = reverse_bit(_SPI_DATAREAD)
 
         with self._spi as spi:
-            #time.sleep(0.02)   # required
+            time.sleep(0.02)   # required (not needed when tested on rPi 3)
             spi.write_readinto(frame, frame) #pylint: disable=no-member
         for i, val in enumerate(frame):
             frame[i] = reverse_bit(val) # turn LSB data to MSB
-        #if self.debug:
-        #    print("Reading: ", [hex(i) for i in frame[1:]])
+        if self.debug:
+            print("Reading: ", [hex(i) for i in frame[1:]])
         return frame[1:]
 
     def _write_data(self, framebytes):
@@ -108,8 +108,8 @@ class PN532_SPI(PN532):
         # start by making a frame with data write in front,
         # then rest of bytes, and LSBify it
         rev_frame = [reverse_bit(x) for x in bytes([_SPI_DATAWRITE]) + framebytes]
-        #if self.debug:
-        #    print("Writing: ", [hex(i) for i in rev_frame])
+        if self.debug:
+            print("Writing: ", [hex(i) for i in rev_frame])
         with self._spi as spi:
-            #time.sleep(0.02)   # required
+            time.sleep(0.02)   # required (not needed when tested on rPi 3)
             spi.write(bytes(rev_frame)) #pylint: disable=no-member
