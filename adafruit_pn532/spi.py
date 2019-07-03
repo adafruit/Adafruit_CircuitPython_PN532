@@ -51,7 +51,12 @@ _SPI_READY                     = const(0x01)
 def reverse_bit(num):
     """Turn an LSB byte to an MSB byte, and vice versa. Used for SPI as
     it is LSB for the PN532, but 99% of SPI implementations are MSB only!"""
-    return int('{:08b}'.format(num)[::-1], 2)
+    result = 0
+    for _ in range(8):
+        result <<= 1
+        result += (num & 1)
+        num >>= 1
+    return result
 
 class PN532_SPI(PN532):
     """Driver for the PN532 connected over SPI. Pass in a hardware or bitbang
@@ -78,11 +83,11 @@ class PN532_SPI(PN532):
         timestamp = time.monotonic()
         with self._spi as spi:
             while (time.monotonic() - timestamp) < timeout:
-                time.sleep(0.02)   # required (not needed when tested on rPi 3)
+                time.sleep(0.02)   # required
                 spi.write_readinto(status, status) #pylint: disable=no-member
                 if reverse_bit(status[1]) == 0x01:  # LSB data is read in MSB
                     return True      # Not busy anymore!
-                else: # (not needed when tested on rPi 3)
+                else:
                     time.sleep(0.01)  # pause a bit till we ask again
         # We timed out!
         return False
@@ -95,7 +100,7 @@ class PN532_SPI(PN532):
         frame[0] = reverse_bit(_SPI_DATAREAD)
 
         with self._spi as spi:
-            time.sleep(0.02)   # required (not needed when tested on rPi 3)
+            time.sleep(0.02)   # required
             spi.write_readinto(frame, frame) #pylint: disable=no-member
         for i, val in enumerate(frame):
             frame[i] = reverse_bit(val) # turn LSB data to MSB
@@ -111,5 +116,5 @@ class PN532_SPI(PN532):
         if self.debug:
             print("Writing: ", [hex(i) for i in rev_frame])
         with self._spi as spi:
-            time.sleep(0.02)   # required (not needed when tested on rPi 3)
+            time.sleep(0.02)   # required
             spi.write(bytes(rev_frame)) #pylint: disable=no-member
