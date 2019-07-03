@@ -81,14 +81,14 @@ class PN532_SPI(PN532):
         status = bytearray([reverse_bit(_SPI_STATREAD), 0])
 
         timestamp = time.monotonic()
-        while (time.monotonic() - timestamp) < timeout:
-            with self._spi as spi:
+        with self._spi as spi:
+            while (time.monotonic() - timestamp) < timeout:
                 time.sleep(0.02)   # required
                 spi.write_readinto(status, status) #pylint: disable=no-member
-            if reverse_bit(status[1]) == 0x01:  # LSB data is read in MSB
-                return True      # Not busy anymore!
-            else:
-                time.sleep(0.01)  # pause a bit till we ask again
+                if reverse_bit(status[1]) == 0x01:  # LSB data is read in MSB
+                    return True      # Not busy anymore!
+                else:
+                    time.sleep(0.01)  # pause a bit till we ask again
         # We timed out!
         return False
 
