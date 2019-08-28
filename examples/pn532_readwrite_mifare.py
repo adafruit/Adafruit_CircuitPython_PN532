@@ -29,6 +29,8 @@ type RFID tag
 
 import board
 import busio
+# Additional import needed for I2C/SPI
+#from digitalio import DigitalInOut
 #
 # NOTE: pick the import that matches the interface being used
 #
