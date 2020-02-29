@@ -185,7 +185,7 @@ class BusyError(Exception):
 class PN532:
     """PN532 driver base, must be extended for I2C/SPI/UART interfacing"""
 
-    # noinspection PyStatementEffect
+    # pylint: disable=pointless-statement
     def __init__(self, *, debug=False, reset=None):
         """Create an instance of the PN532 class
         """
