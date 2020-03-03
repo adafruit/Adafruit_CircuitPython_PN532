@@ -185,7 +185,6 @@ class BusyError(Exception):
 class PN532:
     """PN532 driver base, must be extended for I2C/SPI/UART interfacing"""
 
-    # pylint: disable=pointless-statement
     def __init__(self, *, debug=False, reset=None):
         """Create an instance of the PN532 class
         """
@@ -197,11 +196,11 @@ class PN532:
 
         try:
             self._wakeup()
-            self.firmware_version  # first time often fails, try 2ce
+            _ = self.firmware_version  # first time often fails, try 2ce
             return
         except (BusyError, RuntimeError):
             pass
-        self.firmware_version
+        _ = self.firmware_version
 
     def _read_data(self, count):
         # Read raw data from device, not including status bytes:
