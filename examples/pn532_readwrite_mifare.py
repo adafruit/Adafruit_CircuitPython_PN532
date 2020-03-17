@@ -64,8 +64,8 @@ pn532 = PN532_I2C(i2c, debug=False)
 # uart = busio.UART(board.TX, board.RX, baudrate=115200, timeout=100)
 # pn532 = PN532_UART(uart, debug=False)
 
-ic, ver, rev, support = pn532.get_firmware_version()
-print("Found PN532 with firmware version: {0}.{1}".format(ver, rev))
+ic, ver, rev, support = pn532.firmware_version
+print('Found PN532 with firmware version: {0}.{1}'.format(ver, rev))
 
 # Configure PN532 to communicate with MiFare cards
 pn532.SAM_configuration()
