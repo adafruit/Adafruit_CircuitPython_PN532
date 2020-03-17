@@ -196,11 +196,11 @@ class PN532:
 
         try:
             self._wakeup()
-            self.get_firmware_version() # first time often fails, try 2ce
+            _ = self.firmware_version  # first time often fails, try 2ce
             return
         except (BusyError, RuntimeError):
             pass
-        self.get_firmware_version()
+        _ = self.firmware_version
 
     def _read_data(self, count):
         # Read raw data from device, not including status bytes:
@@ -317,7 +317,8 @@ class PN532:
         # Return response data.
         return response[2:]
 
-    def get_firmware_version(self):
+    @property
+    def firmware_version(self):
         """Call PN532 GetFirmwareVersion function and return a tuple with the IC,
         Ver, Rev, and Support values.
         """
