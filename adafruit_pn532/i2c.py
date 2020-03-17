@@ -44,10 +44,12 @@ from micropython import const
 from adafruit_pn532.adafruit_pn532 import PN532, BusyError, _reset
 
 # pylint: disable=bad-whitespace
-_I2C_ADDRESS                   = const(0x24)
+_I2C_ADDRESS = const(0x24)
+
 
 class PN532_I2C(PN532):
     """Driver for the PN532 connected over I2C."""
+
     def __init__(self, i2c, *, irq=None, reset=None, req=None, debug=False):
         """Create an instance of the PN532 class using I2C. Note that PN532
         uses clock stretching. Optional IRQ pin (not used),
@@ -61,7 +63,7 @@ class PN532_I2C(PN532):
         self._i2c = i2c_device.I2CDevice(i2c, _I2C_ADDRESS)
         super().__init__(debug=debug, reset=reset)
 
-    def _wakeup(self): # pylint: disable=no-self-use
+    def _wakeup(self):  # pylint: disable=no-self-use
         """Send any special commands/data to wake up PN532"""
         if self._req:
             self._req.direction = Direction.OUTPUT
@@ -83,27 +85,26 @@ class PN532_I2C(PN532):
             except OSError:
                 self._wakeup()
                 continue
-            if status == b'\x01':
+            if status == b"\x01":
                 return True  # No longer busy
-            else:
-                time.sleep(0.05)  # lets ask again soon!
+            time.sleep(0.05)  # lets ask again soon!
         # Timed out!
         return False
 
     def _read_data(self, count):
         """Read a specified count of bytes from the PN532."""
         # Build a read request frame.
-        frame = bytearray(count+1)
+        frame = bytearray(count + 1)
         with self._i2c as i2c:
-            i2c.readinto(frame, end=1) # read status byte!
-            if frame[0] != 0x01:             # not ready
+            i2c.readinto(frame, end=1)  # read status byte!
+            if frame[0] != 0x01:  # not ready
                 raise BusyError
-            i2c.readinto(frame)        # ok get the data, plus statusbyte
+            i2c.readinto(frame)  # ok get the data, plus statusbyte
         if self.debug:
             print("Reading: ", [hex(i) for i in frame[1:]])
         else:
             time.sleep(0.1)
-        return frame[1:]   # don't return the status byte
+        return frame[1:]  # don't return the status byte
 
     def _write_data(self, framebytes):
         """Write a specified count of bytes to the PN532"""
