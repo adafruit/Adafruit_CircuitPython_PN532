@@ -295,6 +295,19 @@ class PN532:
         for a response and return a bytearray of response bytes, or None if no
         response is available within the timeout.
         """
+        if not self.send_command(command, params=params, timeout=timeout):
+            return None
+        return self.process_response(
+            command, response_length=response_length, timeout=timeout
+        )
+
+    def send_command(
+        self, command, params=[], timeout=1
+    ):  # pylint: disable=dangerous-default-value
+        """Send specified command to the PN532 and wait for an acknowledgment.
+        Will wait up to timeout seconds for the acknowlegment and return True.
+        If no acknowlegment is received, False is returned.
+        """
         # Build frame data with command and parameters.
         data = bytearray(2 + len(params))
         data[0] = _HOSTTOPN532
@@ -306,12 +319,21 @@ class PN532:
             self._write_frame(data)
         except OSError:
             self._wakeup()
-            return None
+            return False
         if not self._wait_ready(timeout):
-            return None
+            return False
         # Verify ACK response and wait to be ready for function response.
         if not _ACK == self._read_data(len(_ACK)):
             raise RuntimeError("Did not receive expected ACK from PN532!")
+        return True
+
+    def process_response(self, command, response_length=0, timeout=1):
+        """Process the response from the PN532 and expect up to response_length
+        bytes back in a response.  Note that less than the expected bytes might
+        be returned! Will wait up to timeout seconds for a response and return
+        a bytearray of response bytes, or None if no response is available
+        within the timeout.
+        """
         if not self._wait_ready(timeout):
             return None
         # Read response bytes.
@@ -348,15 +370,41 @@ class PN532:
         otherwise a bytearray with the UID of the found card is returned.
         """
         # Send passive read command for 1 card.  Expect at most a 7 byte UUID.
+        response = self.listen_for_passive_target(card_baud=card_baud, timeout=timeout)
+        # If no response is available return None to indicate no card is present.
+        if not response:
+            return None
+        return self.get_passive_target(timeout=timeout)
+
+    def listen_for_passive_target(self, card_baud=_MIFARE_ISO14443A, timeout=1):
+        """Send command to PN532 to begin listening for a Mifare card. This
+        returns True if the command was received succesfully. Note, this does
+        not also return the UID of a card! `get_passive_target` must be called
+        to read the UID when a card is found. If just looking to see if a card
+        is currently present use `read_passive_target` instead.
+        """
+        # Send passive read command for 1 card.  Expect at most a 7 byte UUID.
         try:
-            response = self.call_function(
-                _COMMAND_INLISTPASSIVETARGET,
-                params=[0x01, card_baud],
-                response_length=19,
-                timeout=timeout,
+            response = self.send_command(
+                _COMMAND_INLISTPASSIVETARGET, params=[0x01, card_baud], timeout=timeout
             )
         except BusyError:
-            return None  # no card found!
+            return False  # _COMMAND_INLISTPASSIVETARGET failed
+        return response
+
+    def get_passive_target(self, timeout=1):
+        """Will wait up to timeout seconds and return None if no card is found,
+        otherwise a bytearray with the UID of the found card is returned.
+        `listen_for_passive_target` must have been called first in order to put
+        the PN532 into a listening mode.
+
+        It can be useful to use this when using the IRQ pin. Use the IRQ pin to
+        detect when a card is present and then call this function to read the
+        card's UID. This reduces the amount of time spend checking for a card.
+        """
+        response = self.process_response(
+            _COMMAND_INLISTPASSIVETARGET, response_length=19, timeout=timeout
+        )
         # If no response is available return None to indicate no card is present.
         if response is None:
             return None
