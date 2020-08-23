@@ -54,7 +54,6 @@ from micropython import const
 __version__ = "0.0.0-auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_PN532.git"
 
-# pylint: disable=bad-whitespace
 _PREAMBLE = const(0x00)
 _STARTCODE1 = const(0x00)
 _STARTCODE2 = const(0xFF)
@@ -163,7 +162,6 @@ _GPIO_P35 = const(5)
 
 _ACK = b"\x00\x00\xFF\x00\xFF\x00"
 _FRAME_START = b"\x00\x00\xFF"
-# pylint: enable=bad-whitespace
 
 
 def _reset(pin):

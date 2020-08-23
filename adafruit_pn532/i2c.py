@@ -43,7 +43,6 @@ from digitalio import Direction
 from micropython import const
 from adafruit_pn532.adafruit_pn532 import PN532, BusyError, _reset
 
-# pylint: disable=bad-whitespace
 _I2C_ADDRESS = const(0x24)
 
 

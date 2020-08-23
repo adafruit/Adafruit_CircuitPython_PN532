@@ -42,7 +42,6 @@ import adafruit_bus_device.spi_device as spi_device
 from micropython import const
 from adafruit_pn532.adafruit_pn532 import PN532
 
-# pylint: disable=bad-whitespace
 _SPI_STATREAD = const(0x02)
 _SPI_DATAWRITE = const(0x01)
 _SPI_DATAREAD = const(0x03)
