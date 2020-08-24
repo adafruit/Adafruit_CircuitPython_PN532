@@ -83,7 +83,6 @@ class PN532_I2C(PN532):
                 with self._i2c:
                     self._i2c.readinto(status)
             except OSError:
-                self._wakeup()
                 continue
             if status == b"\x01":
                 return True  # No longer busy
@@ -102,8 +101,6 @@ class PN532_I2C(PN532):
             i2c.readinto(frame)  # ok get the data, plus statusbyte
         if self.debug:
             print("Reading: ", [hex(i) for i in frame[1:]])
-        else:
-            time.sleep(0.1)
         return frame[1:]  # don't return the status byte
 
     def _write_data(self, framebytes):
