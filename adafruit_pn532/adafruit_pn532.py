@@ -164,17 +164,6 @@ _ACK = b"\x00\x00\xFF\x00\xFF\x00"
 _FRAME_START = b"\x00\x00\xFF"
 
 
-def _reset(pin):
-    """Perform a hardware reset toggle"""
-    pin.direction = Direction.OUTPUT
-    pin.value = True
-    time.sleep(0.1)
-    pin.value = False
-    time.sleep(0.5)
-    pin.value = True
-    time.sleep(0.1)
-
-
 class BusyError(Exception):
     """Base class for exceptions in this module."""
 
@@ -182,21 +171,14 @@ class BusyError(Exception):
 class PN532:
     """PN532 driver base, must be extended for I2C/SPI/UART interfacing"""
 
-    def __init__(self, *, debug=False, reset=None):
+    def __init__(self, *, debug=False, irq=None, reset=None):
         """Create an instance of the PN532 class
         """
+        self.low_power = True
         self.debug = debug
-        if reset:
-            if debug:
-                print("Resetting")
-            _reset(reset)
-
-        try:
-            self._wakeup()
-            _ = self.firmware_version  # first time often fails, try 2ce
-            return
-        except (BusyError, RuntimeError):
-            pass
+        self._irq = irq
+        self._reset_pin = reset
+        self.reset()
         _ = self.firmware_version
 
     def _read_data(self, count):
@@ -217,6 +199,18 @@ class PN532:
     def _wakeup(self):
         # Send special command to wake up
         raise NotImplementedError
+
+    def reset(self):
+        """Perform a hardware reset toggle"""
+        if self._reset_pin:
+            if self.debug:
+                print("Resetting")
+            self._reset_pin.direction = Direction.OUTPUT
+            self._reset_pin.value = False
+            time.sleep(0.1)
+            self._reset_pin.value = True
+            time.sleep(0.1)
+        self._wakeup()
 
     def _write_frame(self, data):
         """Write a frame to the PN532 with the specified data bytearray."""
@@ -306,6 +300,9 @@ class PN532:
         Will wait up to timeout seconds for the acknowlegment and return True.
         If no acknowlegment is received, False is returned.
         """
+        if self.low_power:
+            self._wakeup()
+
         # Build frame data with command and parameters.
         data = bytearray(2 + len(params))
         data[0] = _HOSTTOPN532
@@ -316,7 +313,6 @@ class PN532:
         try:
             self._write_frame(data)
         except OSError:
-            self._wakeup()
             return False
         if not self._wait_ready(timeout):
             return False
@@ -341,6 +337,17 @@ class PN532:
             raise RuntimeError("Received unexpected command response!")
         # Return response data.
         return response[2:]
+
+    def power_down(self):
+        if self._reset_pin: # Hard Power Down if the reset pin is connected
+            self._reset_pin.value = False
+            self.low_power = True
+        else:
+            # Soft Power Down otherwise. Enable wakeup on I2C, SPI, UART
+            response = self.call_function(_COMMAND_POWERDOWN, params=[0xb0, 0x00])
+            self.low_power = response[0] == 0x00
+        time.sleep(0.005)
+        return self.low_power
 
     @property
     def firmware_version(self):
