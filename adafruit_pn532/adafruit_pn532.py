@@ -249,7 +249,7 @@ class PN532:
         might be returned!
         """
         # Read frame with expected length of data.
-        response = self._read_data(length + 8)
+        response = self._read_data(length + 7)
         if self.debug:
             print("Read frame:", [hex(i) for i in response])
 
