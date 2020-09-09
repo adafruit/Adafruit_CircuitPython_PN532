@@ -201,7 +201,7 @@ class PN532:
         raise NotImplementedError
 
     def reset(self):
-        """Perform a hardware reset toggle"""
+        """Perform a hardware reset toggle and then wake up the PN532"""
         if self._reset_pin:
             if self.debug:
                 print("Resetting")
@@ -339,6 +339,10 @@ class PN532:
         return response[2:]
 
     def power_down(self):
+        """Put the PN532 into a low power state. If the reset pin is connected a
+        hard power down is performed, if not, a soft power down is performed
+        instead. Returns True if the PN532 was powered down successfully or
+        False if not."""
         if self._reset_pin: # Hard Power Down if the reset pin is connected
             self._reset_pin.value = False
             self.low_power = True
