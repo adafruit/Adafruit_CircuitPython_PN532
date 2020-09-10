@@ -61,7 +61,7 @@ class PN532_UART(PN532):
         self.low_power = False
         self._uart.write(
             b"\x55\x55\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-        ) # wake up!
+        )  # wake up!
         self.SAM_configuration()
 
     def _wait_ready(self, timeout=1):
@@ -69,7 +69,7 @@ class PN532_UART(PN532):
         timestamp = time.monotonic()
         while (time.monotonic() - timestamp) < timeout:
             if self._uart.in_waiting > 0:
-                return True # No Longer Busy
+                return True  # No Longer Busy
             time.sleep(0.01)  # lets ask again soon!
         # Timed out!
         return False

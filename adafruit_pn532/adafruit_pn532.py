@@ -343,12 +343,12 @@ class PN532:
         hard power down is performed, if not, a soft power down is performed
         instead. Returns True if the PN532 was powered down successfully or
         False if not."""
-        if self._reset_pin: # Hard Power Down if the reset pin is connected
+        if self._reset_pin:  # Hard Power Down if the reset pin is connected
             self._reset_pin.value = False
             self.low_power = True
         else:
             # Soft Power Down otherwise. Enable wakeup on I2C, SPI, UART
-            response = self.call_function(_COMMAND_POWERDOWN, params=[0xb0, 0x00])
+            response = self.call_function(_COMMAND_POWERDOWN, params=[0xB0, 0x00])
             self.low_power = response[0] == 0x00
         time.sleep(0.005)
         return self.low_power

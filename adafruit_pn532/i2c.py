@@ -71,7 +71,7 @@ class PN532_I2C(PN532):
             self._req.value = True
             time.sleep(0.01)
         self.low_power = False
-        self.SAM_configuration() # Put the PN532 back in normal mode
+        self.SAM_configuration()  # Put the PN532 back in normal mode
 
     def _wait_ready(self, timeout=1):
         """Poll PN532 if status byte is ready, up to `timeout` seconds"""

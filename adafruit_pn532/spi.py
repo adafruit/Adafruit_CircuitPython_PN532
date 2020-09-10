@@ -79,7 +79,7 @@ class PN532_SPI(PN532):
             spi.write(bytearray([0x00]))  # pylint: disable=no-member
             time.sleep(0.01)
         self.low_power = False
-        self.SAM_configuration() # Put the PN532 back in normal mode
+        self.SAM_configuration()  # Put the PN532 back in normal mode
 
     def _wait_ready(self, timeout=1):
         """Poll PN532 if status byte is ready, up to `timeout` seconds"""
