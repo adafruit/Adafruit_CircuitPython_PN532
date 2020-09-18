@@ -67,16 +67,19 @@ class PN532_SPI(PN532):
     def __init__(self, spi, cs_pin, *, irq=None, reset=None, debug=False):
         """Create an instance of the PN532 class using SPI"""
         self.debug = debug
-        self._irq = irq
         self._spi = spi_device.SPIDevice(spi, cs_pin)
-        super().__init__(debug=debug, reset=reset)
+        super().__init__(debug=debug, irq=irq, reset=reset)
 
     def _wakeup(self):
         """Send any special commands/data to wake up PN532"""
+        if self._reset_pin:
+            self._reset_pin.value = True
+            time.sleep(0.01)
         with self._spi as spi:
-            time.sleep(1)
             spi.write(bytearray([0x00]))  # pylint: disable=no-member
-            time.sleep(1)
+            time.sleep(0.01)
+        self.low_power = False
+        self.SAM_configuration()  # Put the PN532 back in normal mode
 
     def _wait_ready(self, timeout=1):
         """Poll PN532 if status byte is ready, up to `timeout` seconds"""
@@ -85,7 +88,6 @@ class PN532_SPI(PN532):
         timestamp = time.monotonic()
         with self._spi as spi:
             while (time.monotonic() - timestamp) < timeout:
-                time.sleep(0.02)  # required
                 spi.write_readinto(
                     status_cmd, status_response
                 )  # pylint: disable=no-member
@@ -103,7 +105,6 @@ class PN532_SPI(PN532):
         frame[0] = reverse_bit(_SPI_DATAREAD)
 
         with self._spi as spi:
-            time.sleep(0.02)  # required
             spi.write_readinto(frame, frame)  # pylint: disable=no-member
         for i, val in enumerate(frame):
             frame[i] = reverse_bit(val)  # turn LSB data to MSB
@@ -119,5 +120,4 @@ class PN532_SPI(PN532):
         if self.debug:
             print("Writing: ", [hex(i) for i in rev_frame])
         with self._spi as spi:
-            time.sleep(0.02)  # required
             spi.write(bytes(rev_frame))  # pylint: disable=no-member
