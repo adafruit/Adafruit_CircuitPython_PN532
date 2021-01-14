@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2021 ladyada for Adafruit Industries
+# SPDX-License-Identifier: MIT
+
 # Example of detecting and reading a block from a MiFare NFC card.
 # Author: Tony DiCola & Roberto Laricchia
 # Copyright (c) 2015 Adafruit Industries
