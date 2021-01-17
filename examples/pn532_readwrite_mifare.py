@@ -1,4 +1,5 @@
-# SPDX-FileCopyrightText: 2015 Tony DiCola, Roberto Laricchia, and Francesco Crisafulli for Adafruit Industries
+# SPDX-FileCopyrightText: 2015 Tony DiCola, Roberto Laricchia, for Adafruit Industries
+# SPDX-FileCopyrightText: Francesco Crisafulli
 # SPDX-License-Identifier: MIT
 
 # Example of detecting and reading a block from a MiFare classic NFC card.
