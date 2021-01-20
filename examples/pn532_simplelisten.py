@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2021 ladyada for Adafruit Industries
+# SPDX-License-Identifier: MIT
+
 """
 This example shows connecting to the PN532 with I2C (requires clock
 stretching support), SPI, or UART. SPI is best, it uses the most pins but
