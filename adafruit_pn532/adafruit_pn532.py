@@ -391,7 +391,7 @@ class PN532:
         card's UID. This reduces the amount of time spend checking for a card.
         """
         response = self.process_response(
-            _COMMAND_INLISTPASSIVETARGET, response_length=19, timeout=timeout
+            _COMMAND_INLISTPASSIVETARGET, response_length=30, timeout=timeout
         )
         # If no response is available return None to indicate no card is present.
         if response is None:
