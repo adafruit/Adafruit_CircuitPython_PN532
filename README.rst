@@ -56,6 +56,11 @@ Usage Example
 
 Check examples/pn532_simpletest.py for usage example
 
+Documentation
+=============
+
+API documentation for this library can be found on `Read the Docs <https://circuitpython.readthedocs.io/projects/pn532/en/latest/>`_.
+
 Contributing
 ============
 
