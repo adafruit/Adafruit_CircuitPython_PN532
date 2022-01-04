@@ -18,7 +18,7 @@ __version__ = "0.0.0-auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_PN532.git"
 
 import time
-import adafruit_bus_device.i2c_device as i2c_device
+from adafruit_bus_device import i2c_device
 from digitalio import Direction
 from micropython import const
 from adafruit_pn532.adafruit_pn532 import PN532, BusyError
