@@ -32,7 +32,7 @@ class PN532_I2C(PN532):
     def __init__(self, i2c, *, irq=None, reset=None, req=None, debug=False):
         """Create an instance of the PN532 class using I2C. Note that PN532
         uses clock stretching. Optional IRQ pin (not used),
-        reset pin and debugging output.
+        resetp pin and debugging output.
         """
         self.debug = debug
         self._req = req
