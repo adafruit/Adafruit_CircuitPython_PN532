@@ -2,7 +2,7 @@ Introduction
 ============
 
 .. image:: https://readthedocs.org/projects/adafruit-circuitpython-pn532/badge/?version=latest
-    :target: https://circuitpython.readthedocs.io/projects/pn532/en/latest/
+    :target: https://docs.circuitpython.org/projects/pn532/en/latest/
     :alt: Documentation Status
 
 .. image:: https://img.shields.io/discord/327254708534116352.svg
@@ -59,7 +59,7 @@ Check examples/pn532_simpletest.py for usage example
 Documentation
 =============
 
-API documentation for this library can be found on `Read the Docs <https://circuitpython.readthedocs.io/projects/pn532/en/latest/>`_.
+API documentation for this library can be found on `Read the Docs <https://docs.circuitpython.org/projects/pn532/en/latest/>`_.
 
 Contributing
 ============
