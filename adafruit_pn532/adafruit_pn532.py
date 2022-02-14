@@ -489,10 +489,11 @@ class PN532:
 
     def ntag2xx_read_block(self, block_number):
         """Read a block of data from the card.  Block number should be the block
-        to read.  If the block is successfully read a bytearray of length 16 with
-        data starting at the specified block will be returned.  If the block is
-        not read then None will be returned.
+        to read.  If the block is successfully read the first 4 bytes (after the
+        leading 0x00 byte) will be returned.
+        If the block is not read then None will be returned.
         """
-        return self.mifare_classic_read_block(block_number)[
-            0:4
-        ]  # only 4 bytes per page
+        ntag2xx_block = self.mifare_classic_read_block(block_number)
+        if ntag2xx_block is not None:
+            return ntag2xx_block[0:4]  # only 4 bytes per page
+        return None
