@@ -71,7 +71,7 @@ ntag2xx_block = pn532.ntag2xx_read_block(6)
 if ntag2xx_block is not None:
     print(
         "Wrote to block 6, now trying to read that data:",
-        [hex(x) for x in pn532.ntag2xx_read_block(6)],
+        [hex(x) for x in ntag2xx_block],
     )
 else:
     print("Read failed - did you remove the card?")
