@@ -26,7 +26,8 @@ Table of Contents
 .. toctree::
     :caption: Related Products
 
-    `PN532 NFC/RFID Breakout <https://www.adafruit.com/product/364>` and `PN532 NFC/RFID Shield <https://www.adafruit.com/product/789>`_
+    PN532 NFC/RFID Breakout <https://www.adafruit.com/product/364>
+    PN532 NFC/RFID Shield <https://www.adafruit.com/product/789>
 
 
 .. toctree::
