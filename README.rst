@@ -13,6 +13,10 @@ Introduction
     :target: https://github.com/adafruit/Adafruit_CircuitPython_PN532/actions/
     :alt: Build Status
 
+.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+    :target: https://github.com/psf/black
+    :alt: Code Style: Black
+
 CircuitPython driver for the `PN532 NFC/RFID Breakout <https://www.adafruit.com/product/364>`_ and `PN532 NFC/RFID Shield <https://www.adafruit.com/product/789>`_
 
 Dependencies
