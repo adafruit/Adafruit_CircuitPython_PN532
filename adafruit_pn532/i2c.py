@@ -39,7 +39,7 @@ class PN532_I2C(PN532):
         self._i2c = i2c_device.I2CDevice(i2c, _I2C_ADDRESS)
         super().__init__(debug=debug, irq=irq, reset=reset)
 
-    def _wakeup(self):  # pylint: disable=no-self-use
+    def _wakeup(self):
         """Send any special commands/data to wake up PN532"""
         if self._reset_pin:
             self._reset_pin.value = True
