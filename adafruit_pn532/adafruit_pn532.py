@@ -31,6 +31,13 @@ from digitalio import Direction
 
 from micropython import const
 
+try:
+    from typing import Optional, Tuple
+    from typing_extensions import Literal
+    from digitalio import DigitalInOut
+except ImportError:
+    pass
+
 __version__ = "0.0.0+auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_PN532.git"
 
@@ -151,7 +158,13 @@ class BusyError(Exception):
 class PN532:
     """PN532 driver base, must be extended for I2C/SPI/UART interfacing"""
 
-    def __init__(self, *, debug=False, irq=None, reset=None):
+    def __init__(
+        self,
+        *,
+        debug: bool = False,
+        irq: Optional[DigitalInOut] = None,
+        reset: Optional[DigitalInOut] = None
+    ) -> None:
         """Create an instance of the PN532 class"""
         self.low_power = True
         self.debug = debug
@@ -160,26 +173,26 @@ class PN532:
         self.reset()
         _ = self.firmware_version
 
-    def _read_data(self, count):
+    def _read_data(self, count: int) -> bytearray:
         # Read raw data from device, not including status bytes:
         # Subclasses MUST implement this!
         raise NotImplementedError
 
-    def _write_data(self, framebytes):
+    def _write_data(self, framebytes: bytearray) -> None:
         # Write raw bytestring data to device, not including status bytes:
         # Subclasses MUST implement this!
         raise NotImplementedError
 
-    def _wait_ready(self, timeout):
+    def _wait_ready(self, timeout: float) -> bool:
         # Check if busy up to max length of 'timeout' seconds
         # Subclasses MUST implement this!
         raise NotImplementedError
 
-    def _wakeup(self):
+    def _wakeup(self) -> None:
         # Send special command to wake up
         raise NotImplementedError
 
-    def reset(self):
+    def reset(self) -> None:
         """Perform a hardware reset toggle and then wake up the PN532"""
         if self._reset_pin:
             if self.debug:
@@ -191,7 +204,7 @@ class PN532:
             time.sleep(0.1)
         self._wakeup()
 
-    def _write_frame(self, data):
+    def _write_frame(self, data: bytearray) -> None:
         """Write a frame to the PN532 with the specified data bytearray."""
         assert (
             data is not None and 1 < len(data) < 255
@@ -221,7 +234,7 @@ class PN532:
             print("Write frame: ", [hex(i) for i in frame])
         self._write_data(bytes(frame))
 
-    def _read_frame(self, length):
+    def _read_frame(self, length: int) -> bytearray:
         """Read a response frame from the PN532 of at most length bytes in size.
         Returns the data inside the frame if found, otherwise raises an exception
         if there is an error parsing the frame.  Note that less than length bytes
@@ -256,9 +269,13 @@ class PN532:
         # Return frame data.
         return response[offset + 2 : offset + 2 + frame_len]
 
-    def call_function(
-        self, command, response_length=0, params=[], timeout=1
-    ):  # pylint: disable=dangerous-default-value
+    def call_function(  # pylint: disable=dangerous-default-value
+        self,
+        command: int,
+        response_length: int = 0,
+        params: Optional[bytearray] = [],
+        timeout: float = 1,
+    ) -> bytearray:
         """Send specified command to the PN532 and expect up to response_length
         bytes back in a response.  Note that less than the expected bytes might
         be returned!  Params can optionally specify an array of bytes to send as
@@ -272,12 +289,12 @@ class PN532:
             command, response_length=response_length, timeout=timeout
         )
 
-    def send_command(
-        self, command, params=[], timeout=1
-    ):  # pylint: disable=dangerous-default-value
+    def send_command(  # pylint: disable=dangerous-default-value
+        self, command: int, params: Optional[bytearray] = [], timeout: float = 1
+    ) -> bool:
         """Send specified command to the PN532 and wait for an acknowledgment.
         Will wait up to timeout seconds for the acknowlegment and return True.
-        If no acknowlegment is received, False is returned.
+        If no acknowledgment is received, False is returned.
         """
         if self.low_power:
             self._wakeup()
@@ -300,7 +317,9 @@ class PN532:
             raise RuntimeError("Did not receive expected ACK from PN532!")
         return True
 
-    def process_response(self, command, response_length=0, timeout=1):
+    def process_response(
+        self, command: int, response_length: int = 0, timeout: float = 1
+    ) -> bytearray:
         """Process the response from the PN532 and expect up to response_length
         bytes back in a response.  Note that less than the expected bytes might
         be returned! Will wait up to timeout seconds for a response and return
@@ -317,7 +336,7 @@ class PN532:
         # Return response data.
         return response[2:]
 
-    def power_down(self):
+    def power_down(self) -> bool:
         """Put the PN532 into a low power state. If the reset pin is connected a
         hard power down is performed, if not, a soft power down is performed
         instead. Returns True if the PN532 was powered down successfully or
@@ -333,7 +352,7 @@ class PN532:
         return self.low_power
 
     @property
-    def firmware_version(self):
+    def firmware_version(self) -> Tuple[int, int, int, int]:
         """Call PN532 GetFirmwareVersion function and return a tuple with the IC,
         Ver, Rev, and Support values.
         """
@@ -342,7 +361,7 @@ class PN532:
             raise RuntimeError("Failed to detect the PN532")
         return tuple(response)
 
-    def SAM_configuration(self):  # pylint: disable=invalid-name
+    def SAM_configuration(self) -> None:  # pylint: disable=invalid-name
         """Configure the PN532 to read MiFare cards."""
         # Send SAM configuration command with configuration for:
         # - 0x01, normal mode
@@ -352,7 +371,9 @@ class PN532:
         # check the command was executed as expected.
         self.call_function(_COMMAND_SAMCONFIGURATION, params=[0x01, 0x14, 0x01])
 
-    def read_passive_target(self, card_baud=_MIFARE_ISO14443A, timeout=1):
+    def read_passive_target(
+        self, card_baud: int = _MIFARE_ISO14443A, timeout: float = 1
+    ) -> bytearray:
         """Wait for a MiFare card to be available and return its UID when found.
         Will wait up to timeout seconds and return None if no card is found,
         otherwise a bytearray with the UID of the found card is returned.
@@ -364,9 +385,11 @@ class PN532:
             return None
         return self.get_passive_target(timeout=timeout)
 
-    def listen_for_passive_target(self, card_baud=_MIFARE_ISO14443A, timeout=1):
+    def listen_for_passive_target(
+        self, card_baud: int = _MIFARE_ISO14443A, timeout: float = 1
+    ):
         """Send command to PN532 to begin listening for a Mifare card. This
-        returns True if the command was received succesfully. Note, this does
+        returns True if the command was received successfully. Note, this does
         not also return the UID of a card! `get_passive_target` must be called
         to read the UID when a card is found. If just looking to see if a card
         is currently present use `read_passive_target` instead.
@@ -380,7 +403,7 @@ class PN532:
             return False  # _COMMAND_INLISTPASSIVETARGET failed
         return response
 
-    def get_passive_target(self, timeout=1):
+    def get_passive_target(self, timeout: float = 1) -> bytearray:
         """Will wait up to timeout seconds and return None if no card is found,
         otherwise a bytearray with the UID of the found card is returned.
         `listen_for_passive_target` must have been called first in order to put
@@ -404,9 +427,13 @@ class PN532:
         # Return UID of card.
         return response[6 : 6 + response[5]]
 
-    def mifare_classic_authenticate_block(
-        self, uid, block_number, key_number, key
-    ):  # pylint: disable=invalid-name
+    def mifare_classic_authenticate_block(  # pylint: disable=invalid-name
+        self,
+        uid: bytearray,
+        block_number: int,
+        key_number: Literal[0x60, 0x61],
+        key: bytearray,
+    ) -> bool:
         """Authenticate specified block number for a MiFare classic card.  Uid
         should be a byte array with the UID of the card, block number should be
         the block to authenticate, key number should be the key type (like
@@ -429,7 +456,7 @@ class PN532:
         )
         return response[0] == 0x00
 
-    def mifare_classic_read_block(self, block_number):
+    def mifare_classic_read_block(self, block_number: int) -> bytearray:
         """Read a block of data from the card.  Block number should be the block
         to read.  If the block is successfully read a bytearray of length 16 with
         data starting at the specified block will be returned.  If the block is
@@ -447,7 +474,7 @@ class PN532:
         # Return first 4 bytes since 16 bytes are always returned.
         return response[1:]
 
-    def mifare_classic_write_block(self, block_number, data):
+    def mifare_classic_write_block(self, block_number: int, data: bytearray) -> bool:
         """Write a block of data to the card.  Block number should be the block
         to write and data should be a byte array of length 16 with the data to
         write.  If the data is successfully written then True is returned,
@@ -468,7 +495,7 @@ class PN532:
         )
         return response[0] == 0x0
 
-    def ntag2xx_write_block(self, block_number, data):
+    def ntag2xx_write_block(self, block_number: int, data: bytearray) -> bool:
         """Write a block of data to the card.  Block number should be the block
         to write and data should be a byte array of length 4 with the data to
         write.  If the data is successfully written then True is returned,
@@ -487,7 +514,7 @@ class PN532:
         )
         return response[0] == 0x00
 
-    def ntag2xx_read_block(self, block_number):
+    def ntag2xx_read_block(self, block_number: int) -> bytearray:
         """Read a block of data from the card.  Block number should be the block
         to read.  If the block is successfully read the first 4 bytes (after the
         leading 0x00 byte) will be returned.
