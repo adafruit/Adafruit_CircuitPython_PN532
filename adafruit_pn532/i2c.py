@@ -25,7 +25,7 @@ from adafruit_pn532.adafruit_pn532 import PN532, BusyError
 
 try:
     from typing import Optional
-    from digitalio import DigitalInOut
+    from digitalio import DigitalInOut  # pylint: disable=C0412
     from busio import I2C
 except ImportError:
     pass

@@ -34,7 +34,7 @@ from micropython import const
 try:
     from typing import Optional, Tuple
     from typing_extensions import Literal
-    from digitalio import DigitalInOut
+    from digitalio import DigitalInOut  # pylint: disable=C0412
 except ImportError:
     pass
 
