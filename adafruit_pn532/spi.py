@@ -16,6 +16,7 @@ using SPI.
 
 try:
     from typing import Optional
+    from circuitpython_typing import ReadableBuffer
     from digitalio import DigitalInOut
     from busio import SPI
 except ImportError:
@@ -107,7 +108,7 @@ class PN532_SPI(PN532):
             print("Reading: ", [hex(i) for i in frame[1:]])
         return frame[1:]
 
-    def _write_data(self, framebytes: bytearray) -> None:
+    def _write_data(self, framebytes: ReadableBuffer) -> None:
         """Write a specified count of bytes to the PN532"""
         # start by making a frame with data write in front,
         # then rest of bytes, and LSBify it

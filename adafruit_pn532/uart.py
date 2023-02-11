@@ -19,6 +19,7 @@ __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_PN532.git"
 
 try:
     from typing import Optional
+    from circuitpython_typing import ReadableBuffer
     from digitalio import DigitalInOut
     from busio import UART
 except ImportError:
@@ -62,7 +63,7 @@ class PN532_UART(PN532):
         # Timed out!
         return False
 
-    def _read_data(self, count: int) -> bytearray:
+    def _read_data(self, count: int) -> bytes:
         """Read a specified count of bytes from the PN532."""
         frame = self._uart.read(count)
         if not frame:
@@ -71,7 +72,7 @@ class PN532_UART(PN532):
             print("Reading: ", [hex(i) for i in frame])
         return frame
 
-    def _write_data(self, framebytes: bytearray) -> None:
+    def _write_data(self, framebytes: ReadableBuffer) -> None:
         """Write a specified count of bytes to the PN532"""
         self._uart.reset_input_buffer()
         self._uart.write(framebytes)

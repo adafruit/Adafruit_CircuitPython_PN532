@@ -25,7 +25,7 @@ from adafruit_pn532.adafruit_pn532 import PN532, BusyError
 
 try:
     from typing import Optional
-    from digitalio import DigitalInOut  # pylint: disable=C0412
+    from digitalio import DigitalInOut  # pylint: disable=ungrouped-imports
     from busio import I2C
 except ImportError:
     pass
@@ -80,7 +80,7 @@ class PN532_I2C(PN532):
                 continue
             if status == b"\x01":
                 return True  # No longer busy
-            time.sleep(0.01)  # lets ask again soon!
+            time.sleep(0.01)  # let's ask again soon!
         # Timed out!
         return False
 
@@ -97,7 +97,7 @@ class PN532_I2C(PN532):
             print("Reading: ", [hex(i) for i in frame[1:]])
         return frame[1:]  # don't return the status byte
 
-    def _write_data(self, framebytes: bytearray) -> None:
+    def _write_data(self, framebytes: bytes) -> None:
         """Write a specified count of bytes to the PN532"""
         with self._i2c as i2c:
             i2c.write(framebytes)
