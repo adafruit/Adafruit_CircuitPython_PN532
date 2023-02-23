@@ -29,14 +29,16 @@ _I2C_ADDRESS = const(0x24)
 class PN532_I2C(PN532):
     """Driver for the PN532 connected over I2C."""
 
-    def __init__(self, i2c, *, irq=None, reset=None, req=None, debug=False):
+    def __init__(
+        self, i2c, address=_I2C_ADDRESS, *, irq=None, reset=None, req=None, debug=False
+    ):
         """Create an instance of the PN532 class using I2C. Note that PN532
         uses clock stretching. Optional IRQ pin (not used),
         resetp pin and debugging output.
         """
         self.debug = debug
         self._req = req
-        self._i2c = i2c_device.I2CDevice(i2c, _I2C_ADDRESS)
+        self._i2c = i2c_device.I2CDevice(i2c, address)
         super().__init__(debug=debug, irq=irq, reset=reset)
 
     def _wakeup(self):
