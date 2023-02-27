@@ -32,7 +32,6 @@ except ImportError:
 
 _I2C_ADDRESS = const(0x24)
 
-
 class PN532_I2C(PN532):
     """Driver for the PN532 connected over I2C."""
 
