@@ -44,7 +44,7 @@ pn532 = PN532_I2C(i2c, debug=False)
 # pn532 = PN532_SPI(spi, cs_pin, debug=False)
 
 # UART connection
-# uart = busio.UART(board.TX, board.RX, baudrate=115200, timeout=100)
+# uart = busio.UART(board.TX, board.RX, baudrate=115200, timeout=0.1)
 # pn532 = PN532_UART(uart, debug=False)
 
 ic, ver, rev, support = pn532.firmware_version
