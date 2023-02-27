@@ -39,6 +39,7 @@ class PN532_I2C(PN532):
     def __init__(
         self,
         i2c: I2C,
+        address: int = _I2C_ADDRESS,
         *,
         irq: Optional[DigitalInOut] = None,
         reset: Optional[DigitalInOut] = None,
@@ -51,7 +52,7 @@ class PN532_I2C(PN532):
         """
         self.debug = debug
         self._req = req
-        self._i2c = i2c_device.I2CDevice(i2c, _I2C_ADDRESS)
+        self._i2c = i2c_device.I2CDevice(i2c, address)
         super().__init__(debug=debug, irq=irq, reset=reset)
 
     def _wakeup(self) -> None:
