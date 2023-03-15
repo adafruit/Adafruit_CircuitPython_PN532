@@ -14,6 +14,14 @@ using SPI.
 
 """
 
+try:
+    from typing import Optional
+    from circuitpython_typing import ReadableBuffer
+    from digitalio import DigitalInOut
+    from busio import SPI
+except ImportError:
+    pass
+
 __version__ = "0.0.0+auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_PN532.git"
 
@@ -28,7 +36,7 @@ _SPI_DATAREAD = const(0x03)
 _SPI_READY = const(0x01)
 
 
-def reverse_bit(num):
+def reverse_bit(num: int) -> int:
     """Turn an LSB byte to an MSB byte, and vice versa. Used for SPI as
     it is LSB for the PN532, but 99% of SPI implementations are MSB only!"""
     result = 0
@@ -44,13 +52,21 @@ class PN532_SPI(PN532):
     SPI device & chip select digitalInOut pin. Optional IRQ pin (not used),
     reset pin and debugging output."""
 
-    def __init__(self, spi, cs_pin, *, irq=None, reset=None, debug=False):
+    def __init__(
+        self,
+        spi: SPI,
+        cs_pin: DigitalInOut,
+        *,
+        irq: Optional[DigitalInOut] = None,
+        reset: Optional[DigitalInOut] = None,
+        debug: bool = False
+    ) -> None:
         """Create an instance of the PN532 class using SPI"""
         self.debug = debug
         self._spi = spi_device.SPIDevice(spi, cs_pin)
         super().__init__(debug=debug, irq=irq, reset=reset)
 
-    def _wakeup(self):
+    def _wakeup(self) -> None:
         """Send any special commands/data to wake up PN532"""
         if self._reset_pin:
             self._reset_pin.value = True
@@ -61,7 +77,7 @@ class PN532_SPI(PN532):
         self.low_power = False
         self.SAM_configuration()  # Put the PN532 back in normal mode
 
-    def _wait_ready(self, timeout=1):
+    def _wait_ready(self, timeout: float = 1) -> bool:
         """Poll PN532 if status byte is ready, up to `timeout` seconds"""
         status_cmd = bytearray([reverse_bit(_SPI_STATREAD), 0x00])
         status_response = bytearray([0x00, 0x00])
@@ -77,7 +93,7 @@ class PN532_SPI(PN532):
         # We timed out!
         return False
 
-    def _read_data(self, count):
+    def _read_data(self, count: int) -> bytearray:
         """Read a specified count of bytes from the PN532."""
         # Build a read request frame.
         frame = bytearray(count + 1)
@@ -92,7 +108,7 @@ class PN532_SPI(PN532):
             print("Reading: ", [hex(i) for i in frame[1:]])
         return frame[1:]
 
-    def _write_data(self, framebytes):
+    def _write_data(self, framebytes: ReadableBuffer) -> None:
         """Write a specified count of bytes to the PN532"""
         # start by making a frame with data write in front,
         # then rest of bytes, and LSBify it

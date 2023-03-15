@@ -23,6 +23,13 @@ from digitalio import Direction
 from micropython import const
 from adafruit_pn532.adafruit_pn532 import PN532, BusyError
 
+try:
+    from typing import Optional
+    from digitalio import DigitalInOut  # pylint: disable=ungrouped-imports
+    from busio import I2C
+except ImportError:
+    pass
+
 _I2C_ADDRESS = const(0x24)
 
 
@@ -30,8 +37,15 @@ class PN532_I2C(PN532):
     """Driver for the PN532 connected over I2C."""
 
     def __init__(
-        self, i2c, address=_I2C_ADDRESS, *, irq=None, reset=None, req=None, debug=False
-    ):
+        self,
+        i2c: I2C,
+        address: int = _I2C_ADDRESS,
+        *,
+        irq: Optional[DigitalInOut] = None,
+        reset: Optional[DigitalInOut] = None,
+        req: Optional[DigitalInOut] = None,
+        debug: bool = False
+    ) -> None:
         """Create an instance of the PN532 class using I2C. Note that PN532
         uses clock stretching. Optional IRQ pin (not used),
         resetp pin and debugging output.
@@ -41,7 +55,7 @@ class PN532_I2C(PN532):
         self._i2c = i2c_device.I2CDevice(i2c, address)
         super().__init__(debug=debug, irq=irq, reset=reset)
 
-    def _wakeup(self):
+    def _wakeup(self) -> None:
         """Send any special commands/data to wake up PN532"""
         if self._reset_pin:
             self._reset_pin.value = True
@@ -55,7 +69,7 @@ class PN532_I2C(PN532):
         self.low_power = False
         self.SAM_configuration()  # Put the PN532 back in normal mode
 
-    def _wait_ready(self, timeout=1):
+    def _wait_ready(self, timeout: float = 1) -> bool:
         """Poll PN532 if status byte is ready, up to `timeout` seconds"""
         status = bytearray(1)
         timestamp = time.monotonic()
@@ -67,11 +81,11 @@ class PN532_I2C(PN532):
                 continue
             if status == b"\x01":
                 return True  # No longer busy
-            time.sleep(0.01)  # lets ask again soon!
+            time.sleep(0.01)  # let's ask again soon!
         # Timed out!
         return False
 
-    def _read_data(self, count):
+    def _read_data(self, count: int) -> bytearray:
         """Read a specified count of bytes from the PN532."""
         # Build a read request frame.
         frame = bytearray(count + 1)
@@ -84,7 +98,7 @@ class PN532_I2C(PN532):
             print("Reading: ", [hex(i) for i in frame[1:]])
         return frame[1:]  # don't return the status byte
 
-    def _write_data(self, framebytes):
+    def _write_data(self, framebytes: bytes) -> None:
         """Write a specified count of bytes to the PN532"""
         with self._i2c as i2c:
             i2c.write(framebytes)
