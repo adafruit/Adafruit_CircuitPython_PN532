@@ -37,6 +37,34 @@ class PN532_UART(PN532):
     ) -> None:
         """Create an instance of the PN532 class using Serial connection.
         Optional reset pin and debugging output.
+
+        :param busio.UART i2c: The I2C bus the PN532 is connected to.
+        :param DigitalInOut reset: board pin the PN532 reset is connected to
+        :param bool debug: if true print additional debug statements
+
+        **Quickstart: Importing and using the device**
+        Here is an example of using the :class:`PN532_I2C` class.
+        First you will need to import the libraries to use the sensor
+
+        .. code-block:: python
+
+            import board
+            import busio
+            from digitalio import DigitalInOut
+            from adafruit_pn532.uart import PN532_UART
+
+        Once this is done you can define your `busio.UART` object and define your PN532 object
+        .. code-block:: python
+
+            uart = busio.UART(board.TX, board.RX, baudrate=115200, timeout=0.1)
+            pn532 = PN532_UART(uart, debug=False)
+
+        Now you have access to the attributes and functions of the PN532 RFID/NFC shield or breakout
+
+        .. code-block:: python
+
+            uid = pn532.read_passive_target(timeout=0.5)
+
         """
         self.debug = debug
         self._uart = uart

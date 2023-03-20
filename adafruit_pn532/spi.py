@@ -61,7 +61,40 @@ class PN532_SPI(PN532):
         reset: Optional[DigitalInOut] = None,
         debug: bool = False
     ) -> None:
-        """Create an instance of the PN532 class using SPI"""
+        """Create an instance of the PN532 class using SPI
+        Optional IRQ pin (not used)
+
+        :param busio.SPI spi: The spi bus the PN532 is connected to.
+        :param DigitalInOut cs: board pin the PN532 chip select line is connected to
+        :param DigitalInOut irq: board pin the PN532 P32 is connected to
+        :param DigitalInOut reset: board pin the PN532 reset is connected to
+        :param bool debug: if true print additional debug statements
+
+        **Quickstart: Importing and using the device**
+        Here is an example of using the :class:`PN532_I2C` class.
+        First you will need to import the libraries to use the sensor
+
+        .. code-block:: python
+
+            import board
+            import busio
+            from digitalio import DigitalInOut
+            from adafruit_pn532.spi import PN532_SPI
+
+        Once this is done you can define your `busio.SPI` object and define your PN532 object
+        .. code-block:: python
+
+            spi = busio.SPI(board.SCK, board.MOSI, board.MISO)
+            cs_pin = DigitalInOut(board.D5)
+            pn532 = PN532_SPI(spi, cs_pin, debug=False)
+
+        Now you have access to the attributes and functions of the PN532 RFID/NFC shield or breakout
+
+        .. code-block:: python
+
+            uid = pn532.read_passive_target(timeout=0.5)
+
+        """
         self.debug = debug
         self._spi = spi_device.SPIDevice(spi, cs_pin)
         super().__init__(debug=debug, irq=irq, reset=reset)
