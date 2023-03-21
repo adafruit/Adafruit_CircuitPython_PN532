@@ -50,40 +50,43 @@ class PN532_I2C(PN532):
         uses clock stretching. Optional IRQ pin (not used),
         resetp pin and debugging output.
 
-        :param busio.I2C i2c: The I2C bus the PN532 is connected to.
+        :param ~busio.I2C i2c: The I2C bus the PN532 is connected to.
         :param int address: The I2C device address. Defaults to :const:`0x24`
-        :param DigitalInOut reset: board pin the PN532 reset is connected to
-        :param DigitalInOut req: board pin the PN532 P32 is connected to
-        :param bool debug: if true print additional debug statements
+        :param digitalio.DigitalInOut reset: board pin the PN532 reset is connected to
+        :param digitalio.DigitalInOut req: board pin the PN532 P32 is connected to
+        :param bool debug: if True print additional debug statements. Defaults to False
 
         **Quickstart: Importing and using the device**
-        Here is an example of using the :class:`PN532_I2C` class.
-        First you will need to import the libraries to use the sensor
 
-        .. code-block:: python
+            Here is an example of using the :class:`PN532_I2C` class.
+            First you will need to import the libraries to use the sensor
 
-            import board
-            import busio
-            from digitalio import DigitalInOut
-            from adafruit_pn532.i2c import PN532_I2C
+            .. code-block:: python
 
-        Once this is done you can define your `board.I2C` object and define your object
-        .. code-block:: python
+                import board
+                import busio
+                from digitalio import DigitalInOut
+                from adafruit_pn532.i2c import PN532_I2C
 
-            i2c = busio.I2C(board.SCL, board.SDA)
-            reset_pin = DigitalInOut(board.D6)
-            # On Raspberry Pi, you must also connect a pin to P32 "H_Request" for hardware
-            # wakeup! this means we don't need to do the I2C clock-stretch thing
-            req_pin = DigitalInOut(board.D12)
-            pn532 = PN532_I2C(i2c, debug=False, reset=reset_pin, req=req_pin)
-            # Configure PN532 to communicate with MiFare cards
-            pn532.SAM_configuration()
+            Once this is done you can define your `board.I2C` object and define your object
 
-        Now you have access to the attributes and functions of the PN532 RFID/NFC shield or breakout
+            .. code-block:: python
 
-        .. code-block:: python
+                i2c = busio.I2C(board.SCL, board.SDA)
+                reset_pin = DigitalInOut(board.D6)
+                # On Raspberry Pi, you must also connect a pin to P32 "H_Request" for hardware
+                # wakeup! this means we don't need to do the I2C clock-stretch thing
+                req_pin = DigitalInOut(board.D12)
+                pn532 = PN532_I2C(i2c, debug=False, reset=reset_pin, req=req_pin)
+                # Configure PN532 to communicate with MiFare cards
+                pn532.SAM_configuration()
 
-            uid = pn532.read_passive_target(timeout=0.5)
+            Now you have access to the attributes and functions of the PN532 RFID/NFC
+            shield or breakout
+
+            .. code-block:: python
+
+                uid = pn532.read_passive_target(timeout=0.5)
 
         """
         self.debug = debug

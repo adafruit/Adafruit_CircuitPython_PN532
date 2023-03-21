@@ -39,6 +39,8 @@ intersphinx_mapping = {
     "CircuitPython": ("https://docs.circuitpython.org/en/latest/", None),
 }
 
+autoclass_content = "both"
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 
