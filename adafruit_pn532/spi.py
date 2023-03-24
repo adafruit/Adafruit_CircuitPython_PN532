@@ -71,6 +71,7 @@ class PN532_SPI(PN532):
         :param bool debug: if True print additional debug statements. Defaults to False
 
         **Quickstart: Importing and using the device**
+        
         Here is an example of using the :class:`PN532_SPI` class.
         First you will need to import the libraries to use the sensor
 
