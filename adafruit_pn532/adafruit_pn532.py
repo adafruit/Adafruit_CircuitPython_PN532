@@ -28,7 +28,6 @@ Implementation Notes
 
 import time
 from digitalio import Direction
-
 from micropython import const
 
 try:
@@ -164,7 +163,7 @@ class PN532:
         *,
         debug: bool = False,
         irq: Optional[DigitalInOut] = None,
-        reset: Optional[DigitalInOut] = None
+        reset: Optional[DigitalInOut] = None,
     ) -> None:
         """Create an instance of the PN532 class"""
         self.low_power = True
