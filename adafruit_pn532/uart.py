@@ -39,7 +39,7 @@ class PN532_UART(PN532):
         Optional reset pin and debugging output.
 
         :param ~busio.UART uart: The uart object the PN532 is connected to.
-        :param digitalio.DigitalInOut reset: board pin the PN532 reset is connected to
+        :param digitalio.DigitalInOut reset: board pin the PN532 RSTOUT_N is connected to
         :param bool debug: if True print additional debug statements. Defaults to False
 
         **Quickstart: Importing and using the device**

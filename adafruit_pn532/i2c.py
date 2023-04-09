@@ -52,7 +52,8 @@ class PN532_I2C(PN532):
 
         :param ~busio.I2C i2c: The I2C bus the PN532 is connected to.
         :param int address: The I2C device address. Defaults to :const:`0x24`
-        :param digitalio.DigitalInOut reset: board pin the PN532 reset is connected to
+        :param digitalio.DigitalInOut irq: board pin the PN532 IRQ is connected to
+        :param digitalio.DigitalInOut reset: board pin the PN532 RSTOUT_N is connected to
         :param digitalio.DigitalInOut req: board pin the PN532 P32 is connected to
         :param bool debug: if True print additional debug statements. Defaults to False
 

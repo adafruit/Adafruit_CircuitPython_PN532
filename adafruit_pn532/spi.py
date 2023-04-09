@@ -67,7 +67,7 @@ class PN532_SPI(PN532):
         :param ~busio.SPI spi: The spi bus the PN532 is connected to.
         :param digitalio.DigitalInOut cs: board pin the PN532 chip select line is connected to
         :param digitalio.DigitalInOut irq: board pin the PN532 P32 is connected to
-        :param digitalio.DigitalInOut reset: board pin the PN532 reset is connected to
+        :param digitalio.DigitalInOut reset: board pin the PN532 RSTOUT_N is connected to
         :param bool debug: if True print additional debug statements. Defaults to False
 
         **Quickstart: Importing and using the device**
