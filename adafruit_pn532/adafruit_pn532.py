@@ -27,6 +27,7 @@ Implementation Notes
 """
 
 import time
+import struct
 from digitalio import Direction
 from micropython import const
 
@@ -500,6 +501,101 @@ class PN532:
             _COMMAND_INDATAEXCHANGE, params=params, response_length=1
         )
         return response[0] == 0x0
+
+    def mifare_classic_sub_value_block(self, block_number: int, amount: int) -> bool:
+        """Decrease the balance of a value block. Block number should be the block
+        to change and amount should be an integer up to a maximum of 2147483647.
+        If the value block is successfully updated then True is returned,
+        otherwise False is returned.
+        """
+        params = [0x01, MIFARE_CMD_DECREMENT, block_number & 0xFF]
+        params.extend(list(amount.to_bytes(4, "little")))
+
+        response = self.call_function(
+            _COMMAND_INDATAEXCHANGE, params=params, response_length=1
+        )
+        if response[0] != 0x00:
+            return False
+
+        response = self.call_function(
+            _COMMAND_INDATAEXCHANGE,
+            params=[0x01, MIFARE_CMD_TRANSFER, block_number & 0xFF],
+            response_length=1,
+        )
+
+        return response[0] == 0x00
+
+    def mifare_classic_add_value_block(self, block_number: int, amount: int) -> bool:
+        """Increase the balance of a value block. Block number should be the block
+        to change and amount should be an integer up to a maximum of 2147483647.
+        If the value block is successfully updated then True is returned,
+        otherwise False is returned.
+        """
+        params = [0x01, MIFARE_CMD_INCREMENT, block_number & 0xFF]
+        params.extend(list(amount.to_bytes(4, "little")))
+
+        response = self.call_function(
+            _COMMAND_INDATAEXCHANGE, params=params, response_length=1
+        )
+        if response[0] != 0x00:
+            return False
+
+        response = self.call_function(
+            _COMMAND_INDATAEXCHANGE,
+            params=[0x01, MIFARE_CMD_TRANSFER, block_number & 0xFF],
+            response_length=1,
+        )
+
+        return response[0] == 0x00
+
+    def mifare_classic_get_value_block(self, block_number: int) -> int:
+        """Read the contents of a value block and return a integer representing the
+        current balance. Block number should be the block to read.
+        """
+        block = self.mifare_classic_read_block(block_number=block_number)
+        if block is None:
+            return None
+
+        value = block[0:4]
+        value_inverted = block[4:8]
+        value_backup = block[8:12]
+        if value != value_backup:
+            raise RuntimeError(
+                "Value block bytes 0-3 do not match 8-11: "
+                + "".join("%02x" % b for b in block)
+            )
+        if value_inverted != bytearray(map((lambda x: x ^ 0xFF), value)):
+            raise RuntimeError(
+                "Inverted value block bytes 4-7 not valid: "
+                + "".join("%02x" % b for b in block)
+            )
+
+        return struct.unpack("<i", value)[0]
+
+    def mifare_classic_fmt_value_block(
+        self, block_number: int, initial_value: int, address_block: int = 0
+    ) -> bool:
+        """Formats a block on the card so it is suitable for use as a value block.
+        Block number should be the block to use. Initial value should be an integer
+        up to a maximum of 2147483647. Address block is optional and can be used
+        as part of backup management.
+        """
+        data = bytearray()
+        initial_value = initial_value.to_bytes(4, "little")
+        # Value
+        data.extend(initial_value)
+        # Inverted value
+        data.extend(bytearray(map((lambda x: x ^ 0xFF), initial_value)))
+        # Duplicate of value
+        data.extend(initial_value)
+
+        # Address
+        address_block = address_block.to_bytes(1, "little")[0]
+        data.extend(
+            [address_block, address_block ^ 0xFF, address_block, address_block ^ 0xFF]
+        )
+
+        return self.mifare_classic_write_block(block_number, data)
 
     def ntag2xx_write_block(self, block_number: int, data: ReadableBuffer) -> bool:
         """Write a block of data to the card.  Block number should be the block
