@@ -26,16 +26,18 @@ Implementation Notes
 * Adafruit's Bus Device library: https://github.com/adafruit/Adafruit_CircuitPython_BusDevice
 """
 
-import time
 import struct
+import time
+
 from digitalio import Direction
 from micropython import const
 
 try:
     from typing import Optional, Tuple, Union
-    from typing_extensions import Literal
+
     from circuitpython_typing import ReadableBuffer
-    from digitalio import DigitalInOut  # pylint: disable=ungrouped-imports
+    from digitalio import DigitalInOut
+    from typing_extensions import Literal
 except ImportError:
     pass
 
@@ -148,8 +150,8 @@ _GPIO_P33 = const(3)
 _GPIO_P34 = const(4)
 _GPIO_P35 = const(5)
 
-_ACK = b"\x00\x00\xFF\x00\xFF\x00"
-_FRAME_START = b"\x00\x00\xFF"
+_ACK = b"\x00\x00\xff\x00\xff\x00"
+_FRAME_START = b"\x00\x00\xff"
 
 
 class BusyError(Exception):
@@ -207,9 +209,7 @@ class PN532:
 
     def _write_frame(self, data: bytearray) -> None:
         """Write a frame to the PN532 with the specified data bytearray."""
-        assert (
-            data is not None and 1 < len(data) < 255
-        ), "Data must be array of 1 to 255 bytes."
+        assert data is not None and 1 < len(data) < 255, "Data must be array of 1 to 255 bytes."
         # Build frame to send as:
         # - Preamble (0x00)
         # - Start code  (0x00, 0xFF)
@@ -264,9 +264,7 @@ class PN532:
         # Check frame checksum value matches bytes.
         checksum = sum(response[offset + 2 : offset + 2 + frame_len + 1]) & 0xFF
         if checksum != 0:
-            raise RuntimeError(
-                "Response checksum did not match expected value: ", checksum
-            )
+            raise RuntimeError("Response checksum did not match expected value: ", checksum)
         # Return frame data.
         return response[offset + 2 : offset + 2 + frame_len]
 
@@ -286,13 +284,9 @@ class PN532:
         """
         if not self.send_command(command, params=params, timeout=timeout):
             return None
-        return self.process_response(
-            command, response_length=response_length, timeout=timeout
-        )
+        return self.process_response(command, response_length=response_length, timeout=timeout)
 
-    def send_command(
-        self, command: int, params: ReadableBuffer = b"", timeout: float = 1
-    ) -> bool:
+    def send_command(self, command: int, params: ReadableBuffer = b"", timeout: float = 1) -> bool:
         """Send specified command to the PN532 and wait for an acknowledgment.
         Will wait up to timeout seconds for the acknowledgment and return True.
         If no acknowledgment is received, False is returned.
@@ -362,7 +356,7 @@ class PN532:
             raise RuntimeError("Failed to detect the PN532")
         return tuple(response)
 
-    def SAM_configuration(self) -> None:  # pylint: disable=invalid-name
+    def SAM_configuration(self) -> None:
         """Configure the PN532 to read MiFare cards."""
         # Send SAM configuration command with configuration for:
         # - 0x01, normal mode
@@ -404,9 +398,7 @@ class PN532:
             return False  # _COMMAND_INLISTPASSIVETARGET failed
         return response
 
-    def get_passive_target(
-        self, timeout: float = 1
-    ) -> Optional[Union[bytes, bytearray]]:
+    def get_passive_target(self, timeout: float = 1) -> Optional[Union[bytes, bytearray]]:
         """Will wait up to timeout seconds and return None if no card is found,
         otherwise a bytearray with the UID of the found card is returned.
         `listen_for_passive_target` must have been called first in order to put
@@ -430,7 +422,7 @@ class PN532:
         # Return UID of card.
         return response[6 : 6 + response[5]]
 
-    def mifare_classic_authenticate_block(  # pylint: disable=invalid-name
+    def mifare_classic_authenticate_block(
         self,
         uid: ReadableBuffer,
         block_number: int,
@@ -454,14 +446,10 @@ class PN532:
         params[3 : 3 + keylen] = key
         params[3 + keylen :] = uid
         # Send InDataExchange request and verify response is 0x00.
-        response = self.call_function(
-            _COMMAND_INDATAEXCHANGE, params=params, response_length=1
-        )
+        response = self.call_function(_COMMAND_INDATAEXCHANGE, params=params, response_length=1)
         return response[0] == 0x00
 
-    def mifare_classic_read_block(
-        self, block_number: int
-    ) -> Optional[Union[bytes, bytearray]]:
+    def mifare_classic_read_block(self, block_number: int) -> Optional[Union[bytes, bytearray]]:
         """Read a block of data from the card.  Block number should be the block
         to read.  If the block is successfully read a bytearray of length 16 with
         data starting at the specified block will be returned.  If the block is
@@ -479,17 +467,13 @@ class PN532:
         # Return first 4 bytes since 16 bytes are always returned.
         return response[1:]
 
-    def mifare_classic_write_block(
-        self, block_number: int, data: ReadableBuffer
-    ) -> bool:
+    def mifare_classic_write_block(self, block_number: int, data: ReadableBuffer) -> bool:
         """Write a block of data to the card.  Block number should be the block
         to write and data should be a byte array of length 16 with the data to
         write.  If the data is successfully written then True is returned,
         otherwise False is returned.
         """
-        assert (
-            data is not None and len(data) == 16
-        ), "Data must be an array of 16 bytes!"
+        assert data is not None and len(data) == 16, "Data must be an array of 16 bytes!"
         # Build parameters for InDataExchange command to do MiFare classic write.
         params = bytearray(19)
         params[0] = 0x01  # Max card numbers
@@ -497,9 +481,7 @@ class PN532:
         params[2] = block_number & 0xFF
         params[3:] = data
         # Send InDataExchange request.
-        response = self.call_function(
-            _COMMAND_INDATAEXCHANGE, params=params, response_length=1
-        )
+        response = self.call_function(_COMMAND_INDATAEXCHANGE, params=params, response_length=1)
         return response[0] == 0x0
 
     def mifare_classic_sub_value_block(self, block_number: int, amount: int) -> bool:
@@ -511,9 +493,7 @@ class PN532:
         params = [0x01, MIFARE_CMD_DECREMENT, block_number & 0xFF]
         params.extend(list(amount.to_bytes(4, "little")))
 
-        response = self.call_function(
-            _COMMAND_INDATAEXCHANGE, params=params, response_length=1
-        )
+        response = self.call_function(_COMMAND_INDATAEXCHANGE, params=params, response_length=1)
         if response[0] != 0x00:
             return False
 
@@ -534,9 +514,7 @@ class PN532:
         params = [0x01, MIFARE_CMD_INCREMENT, block_number & 0xFF]
         params.extend(list(amount.to_bytes(4, "little")))
 
-        response = self.call_function(
-            _COMMAND_INDATAEXCHANGE, params=params, response_length=1
-        )
+        response = self.call_function(_COMMAND_INDATAEXCHANGE, params=params, response_length=1)
         if response[0] != 0x00:
             return False
 
@@ -561,13 +539,11 @@ class PN532:
         value_backup = block[8:12]
         if value != value_backup:
             raise RuntimeError(
-                "Value block bytes 0-3 do not match 8-11: "
-                + "".join("%02x" % b for b in block)
+                "Value block bytes 0-3 do not match 8-11: " + "".join("%02x" % b for b in block)
             )
         if value_inverted != bytearray(map((lambda x: x ^ 0xFF), value)):
             raise RuntimeError(
-                "Inverted value block bytes 4-7 not valid: "
-                + "".join("%02x" % b for b in block)
+                "Inverted value block bytes 4-7 not valid: " + "".join("%02x" % b for b in block)
             )
 
         return struct.unpack("<i", value)[0]
@@ -591,9 +567,7 @@ class PN532:
 
         # Address
         address_block = address_block.to_bytes(1, "little")[0]
-        data.extend(
-            [address_block, address_block ^ 0xFF, address_block, address_block ^ 0xFF]
-        )
+        data.extend([address_block, address_block ^ 0xFF, address_block, address_block ^ 0xFF])
 
         return self.mifare_classic_write_block(block_number, data)
 
@@ -611,14 +585,10 @@ class PN532:
         params[2] = block_number & 0xFF
         params[3:] = data
         # Send InDataExchange request.
-        response = self.call_function(
-            _COMMAND_INDATAEXCHANGE, params=params, response_length=1
-        )
+        response = self.call_function(_COMMAND_INDATAEXCHANGE, params=params, response_length=1)
         return response[0] == 0x00
 
-    def ntag2xx_read_block(
-        self, block_number: int
-    ) -> Optional[Union[bytes, bytearray]]:
+    def ntag2xx_read_block(self, block_number: int) -> Optional[Union[bytes, bytearray]]:
         """Read a block of data from the card.  Block number should be the block
         to read.  If the block is successfully read the first 4 bytes (after the
         leading 0x00 byte) will be returned.

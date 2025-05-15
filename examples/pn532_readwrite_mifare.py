@@ -48,14 +48,14 @@ pn532 = PN532_I2C(i2c, debug=False)
 # pn532 = PN532_UART(uart, debug=False)
 
 ic, ver, rev, support = pn532.firmware_version
-print("Found PN532 with firmware version: {0}.{1}".format(ver, rev))
+print(f"Found PN532 with firmware version: {ver}.{rev}")
 
 # Configure PN532 to communicate with MiFare cards
 pn532.SAM_configuration()
 
 print("Waiting for RFID/NFC card to write to!")
 
-key = b"\xFF\xFF\xFF\xFF\xFF\xFF"
+key = b"\xff\xff\xff\xff\xff\xff"
 
 while True:
     # Check if a card is available to read
@@ -76,7 +76,7 @@ if not authenticated:
 
 # Set 16 bytes of block to 0xFEEDBEEF
 data = bytearray(16)
-data[0:16] = b"\xFE\xED\xBE\xEF\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+data[0:16] = b"\xfe\xed\xbe\xef\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 
 # Write 16 byte block.
 pn532.mifare_classic_write_block(4, data)

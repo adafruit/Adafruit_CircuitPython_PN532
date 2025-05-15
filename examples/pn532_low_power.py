@@ -10,6 +10,7 @@ After initialization, try waving various 13.56MHz RFID cards over it!
 """
 
 import time
+
 import board
 import busio
 from digitalio import DigitalInOut
@@ -46,7 +47,7 @@ pn532 = PN532_I2C(i2c, debug=False, reset=reset_pin, req=req_pin)
 # pn532 = PN532_UART(uart, debug=False)
 
 ic, ver, rev, support = pn532.firmware_version
-print("Found PN532 with firmware version: {0}.{1}".format(ver, rev))
+print(f"Found PN532 with firmware version: {ver}.{rev}")
 
 # Configure PN532 to communicate with MiFare cards
 pn532.SAM_configuration()
