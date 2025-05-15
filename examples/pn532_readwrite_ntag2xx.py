@@ -44,7 +44,7 @@ pn532 = PN532_SPI(spi, cs_pin, debug=False)
 # pn532 = PN532_UART(uart, debug=False)
 
 ic, ver, rev, support = pn532.firmware_version
-print("Found PN532 with firmware version: {0}.{1}".format(ver, rev))
+print(f"Found PN532 with firmware version: {ver}.{rev}")
 
 # Configure PN532 to communicate with MiFare cards
 pn532.SAM_configuration()
@@ -63,7 +63,7 @@ print("Found card with UID:", [hex(i) for i in uid])
 
 # Set 4 bytes of block to 0xFEEDBEEF
 data = bytearray(4)
-data[0:4] = b"\xFE\xED\xBE\xEF"
+data[0:4] = b"\xfe\xed\xbe\xef"
 # Write 4 byte block.
 pn532.ntag2xx_write_block(6, data)
 # Read block #6

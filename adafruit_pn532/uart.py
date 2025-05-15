@@ -19,13 +19,15 @@ __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_PN532.git"
 
 try:
     from typing import Optional
+
+    from busio import UART
     from circuitpython_typing import ReadableBuffer
     from digitalio import DigitalInOut
-    from busio import UART
 except ImportError:
     pass
 
 import time
+
 from adafruit_pn532.adafruit_pn532 import PN532, BusyError
 
 

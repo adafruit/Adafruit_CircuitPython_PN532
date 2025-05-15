@@ -48,15 +48,15 @@ pn532 = PN532_I2C(i2c, debug=False)
 # pn532 = PN532_UART(uart, debug=False)
 
 ic, ver, rev, support = pn532.firmware_version
-print("Found PN532 with firmware version: {0}.{1}".format(ver, rev))
+print(f"Found PN532 with firmware version: {ver}.{rev}")
 
 # Configure PN532 to communicate with MiFare cards
 pn532.SAM_configuration()
 
 print("Waiting for RFID/NFC card to write to!")
 
-key_a = b"\xFF\xFF\xFF\xFF\xFF\xFF"
-key_b = b"\xFF\xFF\xFF\xFF\xFF\xFF"
+key_a = b"\xff\xff\xff\xff\xff\xff"
+key_b = b"\xff\xff\xff\xff\xff\xff"
 
 
 while True:
@@ -72,9 +72,7 @@ print("")
 print("Found card with UID:", [hex(i) for i in uid])
 print("Authenticating block 4 ...")
 
-authenticated = pn532.mifare_classic_authenticate_block(
-    uid, 4, MIFARE_CMD_AUTH_B, key_b
-)
+authenticated = pn532.mifare_classic_authenticate_block(uid, 4, MIFARE_CMD_AUTH_B, key_b)
 if not authenticated:
     print("Authentication failed!")
 

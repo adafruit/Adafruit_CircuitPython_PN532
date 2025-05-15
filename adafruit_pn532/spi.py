@@ -16,9 +16,10 @@ using SPI.
 
 try:
     from typing import Optional
+
+    from busio import SPI
     from circuitpython_typing import ReadableBuffer
     from digitalio import DigitalInOut
-    from busio import SPI
 except ImportError:
     pass
 
@@ -26,8 +27,10 @@ __version__ = "0.0.0+auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_PN532.git"
 
 import time
+
 from adafruit_bus_device import spi_device
 from micropython import const
+
 from adafruit_pn532.adafruit_pn532 import PN532
 
 _SPI_STATREAD = const(0x02)
@@ -59,7 +62,7 @@ class PN532_SPI(PN532):
         *,
         irq: Optional[DigitalInOut] = None,
         reset: Optional[DigitalInOut] = None,
-        debug: bool = False
+        debug: bool = False,
     ) -> None:
         """Create an instance of the PN532 class using SPI
         Optional IRQ pin (not used)
@@ -108,7 +111,7 @@ class PN532_SPI(PN532):
             self._reset_pin.value = True
             time.sleep(0.01)
         with self._spi as spi:
-            spi.write(bytearray([0x00]))  # pylint: disable=no-member
+            spi.write(bytearray([0x00]))
             time.sleep(0.01)
         self.low_power = False
         self.SAM_configuration()  # Put the PN532 back in normal mode
@@ -120,9 +123,7 @@ class PN532_SPI(PN532):
         timestamp = time.monotonic()
         with self._spi as spi:
             while (time.monotonic() - timestamp) < timeout:
-                spi.write_readinto(
-                    status_cmd, status_response
-                )  # pylint: disable=no-member
+                spi.write_readinto(status_cmd, status_response)
                 if reverse_bit(status_response[1]) == 0x01:  # LSB data is read in MSB
                     return True  # Not busy anymore!
                 time.sleep(0.01)  # pause a bit till we ask again
@@ -137,7 +138,7 @@ class PN532_SPI(PN532):
         frame[0] = reverse_bit(_SPI_DATAREAD)
 
         with self._spi as spi:
-            spi.write_readinto(frame, frame)  # pylint: disable=no-member
+            spi.write_readinto(frame, frame)
         for i, val in enumerate(frame):
             frame[i] = reverse_bit(val)  # turn LSB data to MSB
         if self.debug:
@@ -152,4 +153,4 @@ class PN532_SPI(PN532):
         if self.debug:
             print("Writing: ", [hex(i) for i in rev_frame])
         with self._spi as spi:
-            spi.write(bytes(rev_frame))  # pylint: disable=no-member
+            spi.write(bytes(rev_frame))

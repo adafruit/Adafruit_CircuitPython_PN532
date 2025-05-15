@@ -18,15 +18,18 @@ __version__ = "0.0.0+auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_PN532.git"
 
 import time
+
 from adafruit_bus_device import i2c_device
 from digitalio import Direction
 from micropython import const
+
 from adafruit_pn532.adafruit_pn532 import PN532, BusyError
 
 try:
     from typing import Optional
-    from digitalio import DigitalInOut  # pylint: disable=ungrouped-imports
+
     from busio import I2C
+    from digitalio import DigitalInOut
 except ImportError:
     pass
 
@@ -44,7 +47,7 @@ class PN532_I2C(PN532):
         irq: Optional[DigitalInOut] = None,
         reset: Optional[DigitalInOut] = None,
         req: Optional[DigitalInOut] = None,
-        debug: bool = False
+        debug: bool = False,
     ) -> None:
         """Create an instance of the PN532 class using I2C. Note that PN532
         uses clock stretching. Optional IRQ pin (not used),
